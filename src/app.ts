@@ -249,7 +249,7 @@ export class App {
   private scenes() {
     const scenes = SCENES[(SCENES.indexOf(this.look.scenes) + 1) % SCENES.length];
     this.look = { ...this.look, scenes };
-    const what = { crisp: "crisp, a cell to half a block", halftone: "as a halftone of quarter blocks", soft: "in soft tones" }[scenes];
+    const what = { ascii: "in their own dots, as characters", crisp: "in sharp half blocks", soft: "in soft tones" }[scenes];
     this.notice = { text: `scenes drawn ${what} · d for the next`, until: this.clock + NOTICE };
   }
 

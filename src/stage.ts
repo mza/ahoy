@@ -5,11 +5,10 @@
  * A piece is first trimmed to the part of its frame it ever draws in. If that
  * still does not fit, how it is made to fit depends on how it is drawn, since
  * dropping rows and columns tears a picture made of thin lines:
- *  - a scene is drawn a cell to half a terminal cell, each the colour of its
- *    dot on the ground, sharp, a smaller terminal keeping the heaviest dot of
- *    the cells each of its halves covers; or as a halftone, its dots quarter
- *    blocks on the ground; or, softly, by ascii.rest's own painter, which
- *    blurs it first;
+ *  - a scene is drawn in the dots it is made of, a character to a terminal
+ *    cell in its own colour on the ground, as a page draws it; or a cell to
+ *    half a terminal cell, each the colour of its dot on the ground, sharp;
+ *    or, softly, by ascii.rest's own painter, which blurs it first;
  *  - a picture in block elements is resampled at half-cell height, two pixels a
  *    cell, and drawn again in blocks, so it shrinks as an image does;
  *  - a picture in dense ascii fill keeps, for each cell, the strongest
@@ -21,9 +20,9 @@ import { dark, int, mix, painter } from "./paint.ts";
 import type { Screen } from "./screen.ts";
 import type { Frame } from "./types.ts";
 
-/** How a scene is drawn in a terminal: sharp half blocks, a halftone of quarter blocks, or ascii.rest's soft tones. */
-export type Scenes = "crisp" | "halftone" | "soft";
-export const SCENES: Scenes[] = ["crisp", "halftone", "soft"];
+/** How a scene is drawn in a terminal: in its own dots, as characters; in sharp half blocks; or in ascii.rest's soft tones. */
+export type Scenes = "ascii" | "crisp" | "soft";
+export const SCENES: Scenes[] = ["ascii", "crisp", "soft"];
 
 export interface Look {
   mono: boolean;
@@ -41,8 +40,6 @@ const HALVES: Record<string, [number, number]> = {
 const TONES = [" ", "░", "▒", "▓", "█"];
 // How much of its cell each of a scene's dots covers, a full dot taken as all of it.
 const COVER: Record<string, number> = { " ": 0, "·": 0.19, "•": 0.55, "●": 1 };
-// The quadrant blocks, by which of a cell's quarters are inked: upper left 1, upper right 2, lower left 4, lower right 8.
-const QUADRANTS = [" ", "▘", "▝", "▀", "▖", "▌", "▞", "▛", "▗", "▚", "▐", "▜", "▄", "▙", "▟", "█"];
 // Frames sampled to find where a piece draws and what it draws with.
 const SAMPLES = 24;
 
@@ -161,7 +158,7 @@ export class Stage {
     else this.strongest(screen, bx, by, bw, bh, left(dw), top(dh), dw, dh);
   }
 
-  // A scene, sharp: each of its cells half a terminal cell, or less if the terminal is smaller, with no blur.
+  // A scene, in its own dots or in sharp half blocks, as large as the room allows and no larger than it is.
   private scene(screen: Screen, x: number, y: number, w: number, h: number, ax: number, ay: number) {
     const { cols, rows, fps } = this.meta, { inks, ground, color } = this.sharp!, pic = this.pic;
     const s = Math.min(1, w / cols, (2 * h) / rows);
@@ -174,48 +171,56 @@ export class Stage {
       }
       this.drawnAt = step;
       const lines = this.frame(fps > 0 ? step / fps : 0, { paper: this.paper, color }).split("\n");
-      // each pixel of the picture takes the heaviest dot of the cells it covers, its colour and how much it covers:
-      // averaging them instead is what makes a scene soft in a terminal smaller than it is
-      const cover = new Float32Array(pw * half), inked = new Int32Array(pw * half);
-      for (let j = 0; j < half; j++) {
-        const y0 = Math.floor((j * rows) / half), y1 = Math.max(y0 + 1, Math.floor(((j + 1) * rows) / half));
-        for (let i = 0; i < pw; i++) {
-          const x0 = Math.floor((i * cols) / pw), x1 = Math.max(x0 + 1, Math.floor(((i + 1) * cols) / pw));
-          let most = -1, at = 0;
-          for (let sy = y0; sy < y1; sy++)
-            for (let sx = x0; sx < x1; sx++) {
-              const c = COVER[lines[sy]?.[sx] ?? " "] ?? 0.55;
-              if (c > most) (most = c), (at = sy * cols + sx);
-            }
-          cover[j * pw + i] = most;
-          inked[j * pw + i] = inks[color[at]] ?? inks[0];
-        }
-      }
-      for (let j = 0, k = 0; j < ph; j++)
-        for (let i = 0; i < pw; i++, k++) {
-          const a = 2 * j * pw + i, b = 2 * j + 1 < half ? a + pw : -1;
-          if (this.look.scenes === "halftone") {
-            // quadrant blocks: a scene's cell is the two quadrants of half a terminal cell, both lit for a full dot
-            // and one for a lesser, left and right turn about so that half tones make a checker; the terminal cell
-            // has one ink for its two halves, the heavier one's, dimmed when its dot is slighter than what is lit
-            let bits = 0, lit = 0;
-            [a, b].forEach((at, h) => {
-              const c = at < 0 ? 0 : cover[at], n = c > 0.62 ? 2 : c > 0.1 ? 1 : 0;
-              if (n === 2) bits |= 3 << (2 * h);
-              else if (n === 1) bits |= ((i + j + h) & 1 ? 2 : 1) << (2 * h);
-              lit += n;
-            });
-            const ca = cover[a], cb = b < 0 ? 0 : cover[b];
-            pic.ch[k] = QUADRANTS[bits];
-            pic.fg[k] = bits ? mix(ground, cb > ca ? inked[b] : inked[a], 0.5 + 0.5 * Math.min(1, ((ca + cb) * 2) / lit)) : ground;
+      // The cells of the scene a stretch of the picture covers: from, and up to but not counting.
+      const reach = (i: number, n: number, of: number) => [Math.floor((i * of) / n), Math.max(Math.floor((i * of) / n) + 1, Math.floor(((i + 1) * of) / n))];
+      if (this.look.scenes === "ascii") {
+        // the scene's own dots, a character to a terminal cell: its size by how much the cells it covers are
+        // covered, taken together, and its colour that of the heaviest of them. A terminal cell is twice as tall
+        // as it is wide, so it stands for two rows of the scene at least.
+        for (let j = 0, k = 0; j < ph; j++) {
+          const [y0, y1] = reach(j, ph, rows);
+          for (let i = 0; i < pw; i++, k++) {
+            const [x0, x1] = reach(i, pw, cols);
+            let most = -1, at = 0, sum = 0;
+            for (let sy = y0; sy < y1; sy++)
+              for (let sx = x0; sx < x1; sx++) {
+                const c = COVER[lines[sy]?.[sx] ?? " "] ?? 0.55;
+                sum += c;
+                if (c > most) (most = c), (at = sy * cols + sx);
+              }
+            const c = (sum / ((y1 - y0) * (x1 - x0))) * 1.15;
+            pic.ch[k] = c < 0.07 ? " " : c < 0.32 ? "·" : c < 0.7 ? "•" : "●";
+            pic.fg[k] = inks[color[at]] ?? inks[0];
             pic.bg[k] = ground;
-          } else {
+          }
+        }
+      } else {
+        // sharp half blocks: each half takes the heaviest dot of the cells it covers, its colour mixed into the
+        // ground by how much it covers; averaging them instead is what makes a scene soft
+        const cover = new Float32Array(pw * half), inked = new Int32Array(pw * half);
+        for (let j = 0; j < half; j++) {
+          const [y0, y1] = reach(j, half, rows);
+          for (let i = 0; i < pw; i++) {
+            const [x0, x1] = reach(i, pw, cols);
+            let most = -1, at = 0;
+            for (let sy = y0; sy < y1; sy++)
+              for (let sx = x0; sx < x1; sx++) {
+                const c = COVER[lines[sy]?.[sx] ?? " "] ?? 0.55;
+                if (c > most) (most = c), (at = sy * cols + sx);
+              }
+            cover[j * pw + i] = most;
+            inked[j * pw + i] = inks[color[at]] ?? inks[0];
+          }
+        }
+        for (let j = 0, k = 0; j < ph; j++)
+          for (let i = 0; i < pw; i++, k++) {
+            const a = 2 * j * pw + i, b = 2 * j + 1 < half ? a + pw : -1;
             const top = mix(ground, inked[a], Math.min(1, cover[a])), bottom = b < 0 ? ground : mix(ground, inked[b], Math.min(1, cover[b]));
             pic.ch[k] = top === bottom ? " " : "▀";
             pic.fg[k] = top;
             pic.bg[k] = bottom;
           }
-        }
+      }
     }
     const left = x + Math.round((w - pic.w) * ax), top = y + Math.round((h - pic.h) * ay);
     for (let j = 0, k = 0; j < pic.h; j++) for (let i = 0; i < pic.w; i++, k++) screen.put(left + i, top + j, pic.ch[k], pic.fg[k], pic.bg[k]);
