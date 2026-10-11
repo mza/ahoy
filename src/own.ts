@@ -113,7 +113,6 @@ import * as snakeRoger from "./pieces/snake-roger.ts";
 import * as spiderRoger from "./pieces/spider-roger.ts";
 import * as spyglass from "./pieces/spyglass.ts";
 import * as stedeBonnet from "./pieces/stede-bonnet.ts";
-import * as stormAtSea from "./pieces/storm-at-sea.ts";
 import * as stormRoger from "./pieces/storm-roger.ts";
 import * as sunkenGalleon from "./pieces/sunken-galleon.ts";
 import * as thomasTew from "./pieces/thomas-tew.ts";
@@ -128,7 +127,6 @@ import * as walkThePlank from "./pieces/walk-the-plank.ts";
 import * as wantedPoster from "./pieces/wanted-poster.ts";
 import * as whaleTail from "./pieces/whale-tail.ts";
 import * as wingedSkull from "./pieces/winged-skull.ts";
-import * as wreckCoast from "./pieces/wreck-coast.ts";
 import * as xMarksTheSpot from "./pieces/x-marks-the-spot.ts";
 
 /**
@@ -252,7 +250,6 @@ export const OWN_PIECES: [slug: string, pack: string, piece: Piece][] = [
   ["crows-nest", "lore", crowsNest],
   ["message-in-a-bottle", "lore", messageInABottle],
   ["skull-island", "season-one", skullIsland],
-  ["storm-at-sea", "season-one", stormAtSea],
   ["port-royal", "season-one", portRoyal],
   ["pirate-cove", "season-one", pirateCove],
   ["glowing-wake", "season-one", glowingWake],
@@ -260,7 +257,6 @@ export const OWN_PIECES: [slug: string, pack: string, piece: Piece][] = [
   ["burning-ship", "season-one", burningShip],
   ["masthead-dawn", "season-one", mastheadDawn],
   ["sunken-galleon", "season-one", sunkenGalleon],
-  ["wreck-coast", "season-one", wreckCoast],
   ["treasure-cave", "season-one", treasureCave],
   ["pirate-tavern", "season-one", pirateTavern],
   ["kraken-rising", "season-one", krakenRising],
