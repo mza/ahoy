@@ -1,11 +1,14 @@
 # render-cells.py frames.json out.png [per-row]: draws dump.mjs frames as character cells (blocks and shades as
 # filled rects, other characters in Menlo) in their palette colours on the ground, side by side.
-import json, sys
+import json, os, sys
 from PIL import Image, ImageDraw, ImageFont
 d = json.load(open(sys.argv[1]))
 pal = [tuple(int(h[i:i+2], 16) for i in (1, 3, 5)) for h in d["palette"]]
 g = d["ground"]; ground = tuple(int(g[i:i+2], 16) for i in (1, 3, 5))
-f = ImageFont.truetype("/System/Library/Fonts/Menlo.ttc", 16)
+# a monospace font: $AHOY_FONT, else the first of these that is installed
+FONTS = [os.environ.get("AHOY_FONT", ""), "/System/Library/Fonts/Menlo.ttc", "/usr/share/fonts/TTF/JetBrainsMonoNerdFont-Regular.ttf",
+         "/usr/share/fonts/liberation/LiberationMono-Regular.ttf", "/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf"]
+f = ImageFont.truetype(next(p for p in FONTS if p and os.path.exists(p)), 16)
 cw = round(f.getlength("M")); a, b = f.getmetrics(); chh = a + b
 frames = d["frames"]; cols, rows = d["cols"], d["rows"]
 per = int(sys.argv[3]) if len(sys.argv) > 3 else len(frames)

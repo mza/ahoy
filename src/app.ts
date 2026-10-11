@@ -23,6 +23,9 @@ export interface Settings extends Look {
 const ACCENT = 0xff9900;
 const DIM = 0x808890;
 const FRAME = 0x4a5260;
+// The preview's ground, and the ink on it of a piece that has none of its own.
+const BLACK = 0x000000;
+const INK = 0xe8ebef;
 const FPS = 30;
 // Seconds the bar along the bottom of the player stays up after something happens.
 const HUD = 3;
@@ -194,9 +197,10 @@ export class App {
       screen.put(LW - 1, pos, "┃", DIM);
     }
 
-    // the preview, playing
+    // the preview, playing, on black unless the pieces are drawn for a light terminal
     const px = LW, pw = W - LW;
     screen.box(px, top, pw, h, FRAME, "preview", DIM);
+    const black = !this.look.light;
     if (!entry) {
       screen.text(px + 3, top + 2, "nothing matches", DIM);
     } else {
@@ -209,6 +213,12 @@ export class App {
       screen.text(px + 2 + n, top + h - 2, ` · ${meta.note}`, DIM, -1, pw - 6 - n - size.length);
       screen.text(px + pw - 2 - size.length, top + h - 2, size, FRAME);
     }
+    if (black)
+      for (let y = top + 1; y < top + h - 1; y++)
+        for (let k = y * W + px + 1; k < y * W + px + pw - 1; k++) {
+          if (screen.bg[k] < 0) screen.bg[k] = BLACK;
+          if (screen.fg[k] < 0) screen.fg[k] = INK;
+        }
 
     const marks = this.marked.size ? ` (${this.marked.size})` : "";
     const hint = this.searching

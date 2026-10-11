@@ -1,7 +1,7 @@
 # replay-terminal.py capture.raw out.png cols rows: replays the escape codes ahoy wrote (captured with `script`)
 # onto a grid as it stood just before ahoy quit, and renders it, to see the TUI without a terminal. See
 # docs/MAKING-PIECES.md for the capture command.
-import re, sys
+import os, re, sys
 from PIL import Image, ImageDraw, ImageFont
 data = open(sys.argv[1], "rb").read().decode("utf8", "replace")
 W, H = int(sys.argv[3]), int(sys.argv[4])
@@ -36,7 +36,10 @@ for m in tok.finditer(data):
                 if v == 38: cf = col
                 else: cb = col
             j += 1
-f = ImageFont.truetype("/System/Library/Fonts/Menlo.ttc", 16)
+# a monospace font: $AHOY_FONT, else the first of these that is installed
+FONTS = [os.environ.get("AHOY_FONT", ""), "/System/Library/Fonts/Menlo.ttc", "/usr/share/fonts/TTF/JetBrainsMonoNerdFont-Regular.ttf",
+         "/usr/share/fonts/liberation/LiberationMono-Regular.ttf", "/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf"]
+f = ImageFont.truetype(next(p for p in FONTS if p and os.path.exists(p)), 16)
 cw = round(f.getlength("M")); asc, desc = f.getmetrics(); chh = asc + desc
 img = Image.new("RGB", (W * cw, H * chh), (13, 17, 23)); d = ImageDraw.Draw(img)
 for yy in range(H):
