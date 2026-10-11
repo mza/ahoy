@@ -1,6 +1,6 @@
 # ahoy
 
-Animated ascii art in your terminal: 117 pirate pieces in five packs, the original *pirate pack*, *pirate pixels* (pixel art in a few flat colours), *jolly rogers* (two dozen takes on the skull and crossbones), *pirate lore* (animated logos from the golden age of piracy) and *pirate scenes* (big painted halftone scenes), plus the AWS logo, just for fun. Browse them with a live preview, play one full screen, or leave a screensaver running.
+Animated ascii art in your terminal: 118 pirate pieces in five packs, the original *pirate pack*, *pirate pixels* (pixel art in a few flat colours), *jolly rogers* (two dozen takes on the skull and crossbones), *pirate lore* (animated logos from the golden age of piracy) and *pirate scenes* (big painted halftone scenes), plus the AWS logo, just for fun. Browse them with a live preview, play one full screen, or leave a screensaver running.
 
 The pieces are built on [ascii.rest](https://github.com/bas3line/ascii), and its library of 200+ more pieces is a flag away: `--all`.
 
@@ -79,7 +79,7 @@ Pause a piece with `space`, step to the frame you want with `,` and `.`, and pre
 
 There are contact sheets of every piece in [`docs/sheets`](docs/sheets).
 
-**pirate pixels** (`pixels`): `sea-dog`, `doubloon`, `lit-fuse`, `dead-eye`, `gold-tooth`, `skull-candle`, `fish-bones`, `crossed-cutlasses`, `dagger`, `cannon`, `skeleton-key`, `tricorn`, `rum-bottle`, `x-marks-the-spot`, `desert-island`, `sloop`, `jolly-boat`, `ship-in-a-bottle`, `walk-the-plank`, `shark-fin`, `whale-tail`, `sea-serpent`, `octopus`, `pirate-crab`, `seagull`, `pirate-captain`, `man-of-war`, `ships-monkey`, `bilge-rat`, `anglerfish`, `mermaid`, `kraken-arms`, `flintlock`, `gold-hoard`, `brass-compass`, `grappling-hook`, `oyster-pearl`. Pixel art drawn in half blocks, two square pixels a cell, each pixel drawn on its own, in a few flat colours on black.
+**pirate pixels** (`pixels`): `sea-dog`, `sea-dog-2`, `doubloon`, `lit-fuse`, `dead-eye`, `gold-tooth`, `skull-candle`, `fish-bones`, `crossed-cutlasses`, `dagger`, `cannon`, `skeleton-key`, `tricorn`, `rum-bottle`, `x-marks-the-spot`, `desert-island`, `sloop`, `jolly-boat`, `ship-in-a-bottle`, `walk-the-plank`, `shark-fin`, `whale-tail`, `sea-serpent`, `octopus`, `pirate-crab`, `seagull`, `pirate-captain`, `man-of-war`, `ships-monkey`, `bilge-rat`, `anglerfish`, `mermaid`, `kraken-arms`, `flintlock`, `gold-hoard`, `brass-compass`, `grappling-hook`, `oyster-pearl`. Pixel art drawn in half blocks, two square pixels a cell, each pixel drawn on its own, in a few flat colours on black.
 
 **jolly rogers** (`rogers`): `skull-and-crossbones`, `jack-rackham`, `cutlass-bite`, `pierced-skull`, `crowned-skull`, `fire-roger`, `red-roger`, `ghost-roger`, `laughing-roger`, `rose-roger`, `profile-roger`, `winged-skull`, `emanuel-wynne`, `henry-every`, `condent-pennant`, `gold-roger`, `flintlock-roger`, `anchor-roger`, `shovel-roger`, `storm-roger`, `ice-roger`, `snake-roger`, `spider-roger`, `drowned-roger`. Two dozen takes on the skull and crossbones, or crossed cutlasses, drawn the same way.
 
