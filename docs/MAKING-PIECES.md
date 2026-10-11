@@ -84,9 +84,9 @@ The house style: bold silhouettes filled with one character per material (`8` bo
 
 ### Pixel art in half blocks (the `pixels` pack)
 
-Sprites like an 8-bit game's: a canvas of square pixels, one a cell wide and half a cell tall (80×64 for a full-size piece), printed as `█ ▀ ▄` and nothing else, in two to four flat colours on black. `lit-fuse` is the one to copy: its "pixel kit" (`set`, `rect`, `disc`, `line`, `sprite`, `emit`) is pasted into each piece, since a piece can import nothing.
+Flat-colour pixel art: a canvas of square pixels, one a cell wide and half a cell tall (80×64 for a full-size piece), printed as `█ ▀ ▄` and nothing else, in two to four flat colours on black. `lit-fuse` is the one to copy: its "pixel kit" (`set`, `rect`, `disc`, `line`, `sprite`, `emit`) is pasted into each piece, since a piece can import nothing.
 
-- **One bold, chunky emblem** filling most of the frame. Draw faces and small features as `sprite` rows at `scale` 2, so they stay chunky; primitives suit discs, hulls, blades and waves.
+- **One bold emblem** filling most of the frame, drawn at full resolution: a canvas pixel is the unit of detail. The user wants more resolution, not less; big pixels (a `sprite` at `scale` 2 or 3) look low-resolution next to `blackbeard`, and a first pass at `stede-bonnet` and `ghost-captain` at `scale` 3 was sent back for it. Draw curves with geometry or `sprite` rows at `scale` 1, and spend single pixels on detail: tooth gaps, a crack, a fuller down a blade, a shade colour down the right-hand edges. `stede-bonnet` has a skull drawn this way. (The first two dozen in the pack are chunkier than this.)
 - **A cell has one ink.** Where a cell's two pixels differ in colour, `emit` takes the one further down the palette, so keep colour boundaries on even pixel rows or put a black gap between colours.
 - **Black gaps, two pixels wide,** wherever one shape sits on another: in one ink every pixel is the same, and the gaps are all that is left of the drawing.
 - **Animate in poses and whole pixels:** a blink, a walk cycle, a glint, a bob. Precompute what never moves and `set` it back each frame.

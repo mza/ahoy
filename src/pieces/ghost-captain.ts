@@ -3,8 +3,8 @@
  * clay pipe clenched in its teeth. Smoke rings rise from the pipe and spread
  * as they go, the pipe's ember glows, and embers flicker in its eyes.
  *
- * Pixel art in block elements, two square pixels a cell, in five flat colours.
- * Black gaps keep the shapes apart, so it reads in one ink too.
+ * Flat colour in block elements, two square pixels a cell, each pixel drawn on
+ * its own, the bone shaded down its right-hand edges. It reads in one ink too.
  */
 import type { Frame, Meta } from "../types.ts";
 
@@ -16,15 +16,15 @@ export const meta = {
   rows: 32,
   fps: 20,
   ground: "#000000",
-  // bone, the hat's felt, smoke, gold, ember
-  palette: ["#e8e2d0", "#59616f", "#8a94a6", "#f2b632", "#e23a2e"],
+  // bone and its shade, the hat's felt, smoke, gold, ember
+  palette: ["#f1ede2", "#bdb6a6", "#59616f", "#8a94a6", "#f2b632", "#e23a2e"],
 } satisfies Meta;
 
 // ---- the pixel kit: a canvas of square pixels, one a cell wide and half a cell tall
 
 const W = meta.cols, H = meta.rows * 2;
 // A pixel is 0 for empty, else a palette index plus one.
-const BONE = 1, FELT = 2, SMOKE = 3, GOLD = 4, EMBER = 5;
+const BONE = 1, SHADE = 2, FELT = 3, SMOKE = 4, GOLD = 5, EMBER = 6;
 
 const set = (p: Uint8Array, x: number, y: number, k: number) => {
   x = Math.round(x), y = Math.round(y);
@@ -66,40 +66,40 @@ const emit = (p: Uint8Array, color?: Uint8Array) => {
 
 // ---- the captain
 
-// The tricorn: its crown, a gold band round it, and a brim turned up to a point at each end, gold along its edge.
-const HAT = [
-  "............hhhh............",
-  "..........hhhhhhhh..........",
-  ".........hhhhhhhhhh.........",
-  "g........hhhhhhhhhh........g",
-  "gg......hhhhhhhhhhhh......gg",
-  "hgg.....gggggggggggg.....ggh",
-  "hhgg..gg____________gg..gghh",
-  "hhhgggghhhhhhhhhhhhhhgggghhh",
-  ".hhhhhhhhhhhhhhhhhhhhhhhhhh.",
-  "..hhhhhhhhhhhhhhhhhhhhhhhh..",
-  "....hhhhhhhhhhhhhhhhhhhh....",
-];
-// The skull from its brow down, the crown of it under the hat.
-const SKULL = [
-  ".#############.",
-  "###############",
-  "###############",
-  "##___#####___##",
-  "##____###____##",
-  "##____###____##",
-  "###__##_##__###",
-  ".#####___#####.",
-  "..###########..",
-  "...#_#_#_#_#...",
-  "...#########...",
-];
-const KEYS = { "#": BONE, h: FELT, g: GOLD };
-const HX = 4, HY = 4; // the hat's top left pixel, two to each of its own
-const SX = 10, SY = 28; // the skull's, three to each
-const BOWL = [66, 45]; // the pipe bowl's top left pixel
-const EYES = [[SX + 10, SY + 13], [SX + 31, SY + 13]]; // the middle of each socket
+// A skull, face on, about the middle of its cranium: 35 pixels wide, from 15 above that to 23 below.
+const NOSE = ["..#..", ".###.", "#####", "##.##", "##.##"];
+const skull = (p: Uint8Array, cx: number, cy: number) => {
+  disc(p, cx, cy, 17.5, 15.5, BONE);
+  for (const s of [-1, 1]) disc(p, cx + s * 12, cy + 9, 3.6, 3.2, BONE);
+  rect(p, cx - 10, cy + 10, 21, 12, BONE);
+  rect(p, cx - 9, cy + 22, 19, 2, BONE);
+  // the sockets, each under a brow that slants down towards the nose
+  for (const s of [-1, 1])
+    for (let y = cy - 3; y <= cy + 9; y++)
+      for (let x = cx + s * 8 - 6; x <= cx + s * 8 + 6; x++) {
+        const out = s * (x - cx - s * 8);
+        if ((out / 5.7) ** 2 + ((y - cy - 3) / 5.3) ** 2 < 1 && y >= cy - 2.5 + 0.3 * (5.7 - out)) set(p, x, y, 0);
+      }
+  NOSE.forEach((row, j) => [...row].forEach((c, i) => c === "#" && set(p, cx - 2 + i, cy + 10 + j, 0)));
+  // the mouth, and the gaps between its teeth
+  rect(p, cx - 8, cy + 16, 17, 1, 0);
+  for (const x of [-6, -2, 2, 6]) rect(p, cx + x, cy + 17, 1, 7, 0);
+  // a crack in the crown
+  for (const [x, y] of [[6, -15], [6, -14], [5, -13], [6, -12], [7, -11], [6, -10], [6, -9]]) set(p, cx + x, cy + y, 0);
+};
+// Bone's right-hand edges in its shade, as if lit from the left.
+const shade = (p: Uint8Array) => {
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (p[y * W + x] === BONE && (x === W - 1 || !p[y * W + x + 1])) p[y * W + x] = SHADE;
+};
+
+const CX = 32, CY = 38; // the middle of the skull's cranium
+const BOWL = [62, 47]; // the pipe bowl's top left pixel
 const LOOP = 6, RINGS = 3;
+// The brim of the tricorn at column x: its top and bottom rows, turned up at each end and cut to a point there.
+const brim = (x: number) => {
+  const d = Math.abs(x - CX) / 29, top = 21 - 13 * d ** 2.5;
+  return [Math.round(top), Math.round(top + 9 * Math.min(1, (1 - d) * 5))];
+};
 
 // A number from 0 to 1 for each whole number, the same every time.
 const hash = (n: number) => {
@@ -110,16 +110,24 @@ const hash = (n: number) => {
 };
 
 export default function ghostCaptain(): Frame {
-  // what never moves: the hat, the skull and the pipe
+  // what never moves: the skull, the hat over its crown, and the pipe
   const still = new Uint8Array(W * H);
-  sprite(still, HX, HY, HAT, KEYS, 2);
-  sprite(still, SX, SY, SKULL, KEYS, 3);
-  // the pipe: a black gap through the teeth, the stem out to the right, and the bowl standing on its end
-  line(still, SX + 31, SY + 28, BOWL[0] + 2, BOWL[1] + 11, 0, 4);
-  rect(still, BOWL[0] - 2, BOWL[1] - 2, 11, 16, 0);
-  rect(still, BOWL[0], BOWL[1] + 2, 7, 11, BONE);
-  rect(still, BOWL[0] - 1, BOWL[1] + 2, 9, 2, BONE);
-  line(still, SX + 31, SY + 28, BOWL[0] + 2, BOWL[1] + 11, BONE, 2);
+  skull(still, CX, CY);
+  // the pipe: a black gap through the teeth, the bowl standing at the stem's end, its rim a little wider
+  line(still, CX + 8, CY + 17, BOWL[0] + 2, BOWL[1] + 10, 0, 4);
+  rect(still, BOWL[0] - 2, BOWL[1] - 1, 12, 14, 0);
+  rect(still, BOWL[0], BOWL[1] + 1, 8, 11, BONE);
+  rect(still, BOWL[0] - 1, BOWL[1] + 1, 10, 2, BONE);
+  line(still, CX + 8, CY + 17, BOWL[0] + 2, BOWL[1] + 10, BONE, 2);
+  shade(still);
+  // the hat: its crown, then its brim across it with gold along the top edge, and a gap under it
+  disc(still, CX, 17, 13.5, 9.5, FELT);
+  for (let x = CX - 29; x <= CX + 29; x++) {
+    const [top, bottom] = brim(x);
+    rect(still, x, top, 1, bottom - top + 3, 0);
+    rect(still, x, top, 1, bottom - top + 1, FELT);
+    rect(still, x, top, 1, Math.min(2, bottom - top + 1), GOLD);
+  }
 
   return (t, { color } = {}) => {
     const u = ((t % LOOP) + LOOP) % LOOP;
@@ -128,31 +136,33 @@ export default function ghostCaptain(): Frame {
     // only onto empty pixels: the smoke passes behind everything
     const puff = (x: number, y: number, k: number) => {
       x = Math.round(x), y = Math.round(y);
-      for (let j = 0; j < 2; j++) for (let i = 0; i < 2; i++) if (x + i >= 0 && x + i < W && y + j >= 0 && y + j < H && !p[(y + j) * W + x + i]) p[(y + j) * W + x + i] = k;
+      if (x >= 0 && x < W && y >= 0 && y < H && !p[y * W + x]) p[y * W + x] = k;
     };
 
     // smoke rings: each rises from the bowl, drifts and widens, and breaks up as it goes
     for (let i = 0; i < RINGS; i++) {
       const age = (u + (i * LOOP) / RINGS) % LOOP, k = age / LOOP;
-      const cx = BOWL[0] + 3 + 3 * Math.sin(k * 5 + i), cy = BOWL[1] - 4 - k * 40;
-      const rx = 3 + 7 * Math.sqrt(k), ry = rx * 0.45, n = Math.ceil(rx * 5);
+      const cx = BOWL[0] + 4 + 3 * Math.sin(k * 5 + i), cy = BOWL[1] - 4 - k * 42;
+      const rx = 2.5 + 7.5 * Math.sqrt(k), ry = rx * 0.45, n = Math.ceil(rx * 10);
       for (let j = 0; j < n; j++) {
-        if (k > 0.55 && hash(i * 131 + j) < (k - 0.55) * 2) continue;
+        if (k > 0.5 && hash(i * 131 + (j >> 1)) < (k - 0.5) * 1.8) continue;
         const a = (j / n) * 2 * Math.PI;
-        puff(cx + rx * Math.cos(a) - 1, cy + ry * Math.sin(a) - 1, k > 0.7 ? FELT : SMOKE);
+        puff(cx + rx * Math.cos(a), cy + ry * Math.sin(a), k > 0.7 ? FELT : SMOKE);
+        if (k < 0.35) puff(cx + (rx - 1) * Math.cos(a), cy + (ry - 1) * Math.sin(a), SMOKE);
       }
     }
     // the ember in the bowl, flickering
-    for (let x = 0; x < 5; x += 1) {
+    for (let x = 0; x < 6; x++) {
       const f = hash(Math.floor(u * 10) * 31 + x);
-      rect(p, BOWL[0] + 1 + x, BOWL[1], 1, 2, f > 0.5 ? GOLD : EMBER);
+      rect(p, BOWL[0] + 1 + x, BOWL[1] - 1, 1, 2, f > 0.5 ? GOLD : EMBER);
     }
     // embers in the eyes: they smoulder, flare now and then, and go dark for a blink
     const blink = u > 4.1 && u < 4.35, flare = Math.sin(u * 2.1) * Math.sin(u * 5.3 + 1) > 0.35;
     if (!blink)
-      for (const [x, y] of EYES) {
-        rect(p, x, y, 3, 3, flare ? GOLD : EMBER);
-        if (flare) rect(p, x - 3, y, 9, 3, EMBER), rect(p, x, y - 3, 3, 9, EMBER), rect(p, x, y, 3, 3, GOLD);
+      for (const s of [-1, 1]) {
+        const x = CX + s * 8 - 1, y = CY + 4;
+        rect(p, x, y, 2, 2, flare ? GOLD : EMBER);
+        if (flare) rect(p, x - 1, y, 4, 2, EMBER), rect(p, x, y - 1, 2, 4, EMBER), rect(p, x, y, 2, 2, GOLD);
       }
     return emit(p, color);
   };

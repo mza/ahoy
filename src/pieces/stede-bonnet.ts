@@ -4,8 +4,9 @@
  * fall now and then, and a glint runs down the dagger.
  *
  * Drawn from the flag credited to Bonnet in the early 1700s (public domain),
- * as pixel art in block elements, two square pixels a cell, in flat colour.
- * Black gaps keep the shapes apart, so it reads in one ink too.
+ * as flat colour in block elements, two square pixels a cell, each pixel drawn
+ * on its own, the bone shaded down its right-hand edges. It reads in one ink
+ * too.
  */
 import type { Frame, Meta } from "../types.ts";
 
@@ -17,15 +18,15 @@ export const meta = {
   rows: 32,
   fps: 20,
   ground: "#000000",
-  // bone, steel, blood, and blood as the heart beats
-  palette: ["#e8e2d0", "#8a94a6", "#e23a2e", "#ff5a4d"],
+  // bone and its shade, steel, blood, and blood as the heart beats
+  palette: ["#f1ede2", "#bdb6a6", "#8a94a6", "#d81f2a", "#ff4a52"],
 } satisfies Meta;
 
 // ---- the pixel kit: a canvas of square pixels, one a cell wide and half a cell tall
 
 const W = meta.cols, H = meta.rows * 2;
 // A pixel is 0 for empty, else a palette index plus one.
-const BONE = 1, STEEL = 2, BLOOD = 3, HOT = 4;
+const BONE = 1, SHADE = 2, STEEL = 3, BLOOD = 4, HOT = 5;
 
 const set = (p: Uint8Array, x: number, y: number, k: number) => {
   x = Math.round(x), y = Math.round(y);
@@ -67,76 +68,91 @@ const emit = (p: Uint8Array, color?: Uint8Array) => {
 
 // ---- the flag
 
-const SKULL = [
-  "....#######....",
-  "..###########..",
-  ".#############.",
-  "###############",
-  "###############",
-  "##___#####___##",
-  "##____###____##",
-  "##____###____##",
-  "###__##_##__###",
-  ".#####___#####.",
-  "..###########..",
-  "...#_#_#_#_#...",
-  "...#########...",
-];
-const HEART = [
-  ".##.##.",
-  "#######",
-  "#######",
-  ".#####.",
-  "..###..",
-  "...#...",
-];
-const SX = 18, SY = 3; // the skull's top left pixel, three pixels to each of its own
-const HX = 65, HY = 18; // the heart's, two to each
+// A skull, face on, about the middle of its cranium: 35 pixels wide, from 15 above that to 23 below.
+const NOSE = ["..#..", ".###.", "#####", "##.##", "##.##"];
+const skull = (p: Uint8Array, cx: number, cy: number) => {
+  disc(p, cx, cy, 17.5, 15.5, BONE);
+  for (const s of [-1, 1]) disc(p, cx + s * 12, cy + 9, 3.6, 3.2, BONE);
+  rect(p, cx - 10, cy + 10, 21, 12, BONE);
+  rect(p, cx - 9, cy + 22, 19, 2, BONE);
+  // the sockets, each under a brow that slants down towards the nose
+  for (const s of [-1, 1])
+    for (let y = cy - 3; y <= cy + 9; y++)
+      for (let x = cx + s * 8 - 6; x <= cx + s * 8 + 6; x++) {
+        const out = s * (x - cx - s * 8);
+        if ((out / 5.7) ** 2 + ((y - cy - 3) / 5.3) ** 2 < 1 && y >= cy - 2.5 + 0.3 * (5.7 - out)) set(p, x, y, 0);
+      }
+  NOSE.forEach((row, j) => [...row].forEach((c, i) => c === "#" && set(p, cx - 2 + i, cy + 10 + j, 0)));
+  // the mouth, and the gaps between its teeth
+  rect(p, cx - 8, cy + 16, 17, 1, 0);
+  for (const x of [-6, -2, 2, 6]) rect(p, cx + x, cy + 17, 1, 7, 0);
+  // a crack in the crown
+  for (const [x, y] of [[6, -15], [6, -14], [5, -13], [6, -12], [7, -11], [6, -10], [6, -9]]) set(p, cx + x, cy + y, 0);
+};
+// Bone's right-hand edges in its shade, as if lit from the left.
+const shade = (p: Uint8Array) => {
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (p[y * W + x] === BONE && (x === W - 1 || !p[y * W + x + 1])) p[y * W + x] = SHADE;
+};
+
+// A heart about the middle of its two lobes, `k` times its size at rest.
+const heart = (p: Uint8Array, cx: number, cy: number, k: number, ink: number) => {
+  for (const s of [-1, 1]) disc(p, cx + s * 3.6 * k, cy, 4.5 * k, 4.5 * k, ink);
+  for (let y = 0; y <= 12 * k; y++) {
+    const half = 7.9 * k * (1 - y / (12 * k));
+    rect(p, Math.round(cx - half), Math.round(cy + 1 + y), Math.round(2 * half) + 1, 1, ink);
+  }
+};
+
 const DX = 8; // the dagger's middle column
+const HX = 71, HY = 17; // the middle of the heart
 const BEAT_EVERY = 1.2; // seconds between heartbeats, the first of them a little way in
 const SWELL = [[0, 0.12], [0.24, 0.36]]; // when in a beat the heart is swollen: lub, dub
 const LOOP = 4 * BEAT_EVERY;
-const GLINT = [1.5, 2.3]; // when in the loop the glint runs down the blade
+const GLINT = [1.5, 2.4]; // when in the loop the glint runs down the blade
 
 export default function stedeBonnet(): Frame {
   // what never moves: the skull, the bone under it and the dagger
   const still = new Uint8Array(W * H);
-  sprite(still, SX, SY, SKULL, { "#": BONE }, 3);
+  skull(still, 40, 18);
   // the bone: a shaft with two knuckles at each end
-  rect(still, 12, 50, 57, 5, BONE);
-  for (const x of [12, 68]) for (const y of [49, 55]) disc(still, x, y, 4.5, 4.5, BONE);
-  // the dagger, point up: a blade narrowing to its tip, a guard, a grip and a pommel
-  for (let y = 6; y < 30; y++) {
-    const half = Math.min(2, Math.floor((y - 6) / 2));
+  rect(still, 16, 50, 49, 4, BONE);
+  for (const x of [15, 65]) for (const y of [49, 54]) disc(still, x, y, 3.5, 3.5, BONE);
+  // the dagger's guard, its ends turned down, its grip and its pommel
+  rect(still, DX - 6, 31, 13, 2, BONE);
+  for (const s of [-1, 1]) set(still, DX + s * 6, 33, BONE);
+  rect(still, DX - 1, 34, 3, 9, BONE);
+  disc(still, DX, 45, 2.7, 2.7, BONE);
+  shade(still);
+  // its blade, point up, narrowing to the tip, a fuller down the middle of it
+  for (let y = 5; y < 31; y++) {
+    const half = Math.min(2, Math.floor((y - 5) / 3));
     rect(still, DX - half, y, 2 * half + 1, 1, STEEL);
   }
-  rect(still, DX - 6, 30, 13, 2, BONE);
-  rect(still, DX - 1, 33, 3, 5, BONE);
-  disc(still, DX, 40, 2.6, 2.6, BONE);
+  rect(still, DX, 13, 1, 15, 0);
 
   return (t, { color } = {}) => {
     const u = ((t % LOOP) + LOOP) % LOOP, b = (u + 0.6) % BEAT_EVERY;
     const p = new Uint8Array(W * H);
     p.set(still);
 
-    // the heart, a pixel bigger all round when it swells
+    // the heart, bigger and brighter when it swells, a shine on its left lobe
     const swollen = SWELL.some(([a, z]) => b >= a && b < z);
-    if (swollen) for (const [dx, dy] of [[-1, 0], [1, 0], [0, -1], [0, 1]]) sprite(p, HX + dx, HY + dy, HEART, { "#": HOT }, 2);
-    sprite(p, HX, HY, HEART, { "#": swollen ? HOT : BLOOD }, 2);
-    rect(p, HX + 2, HY + 3, 2, 2, BONE);
+    heart(p, HX, HY, swollen ? 1.12 : 1, swollen ? HOT : BLOOD);
+    rect(p, HX - 6, HY - 2, 2, 1, BONE);
+    set(p, HX - 6, HY - 1, BONE);
 
     // a drop from its point, every other beat: it gathers, falls faster and faster, and is gone
     const d = u % (2 * BEAT_EVERY);
-    if (d > 0.5 && d < 0.9) rect(p, HX + 6, HY + 13, 2, 2, BLOOD);
+    if (d > 0.5 && d < 0.9) rect(p, HX, HY + 15, 1, d > 0.7 ? 2 : 1, BLOOD);
     else if (d >= 0.9 && d < 1.7) {
       const k = (d - 0.9) / 0.8;
-      rect(p, HX + 6, HY + 13 + Math.round(30 * k * k), 2, 3, BLOOD);
+      rect(p, HX, HY + 15 + Math.round(34 * k * k), 1, 3, BLOOD);
     }
 
-    // the glint: two bone pixels running down the blade from its tip
+    // the glint: a short bright stroke running down one side of the blade from its tip
     if (u >= GLINT[0] && u < GLINT[1]) {
-      const y = 8 + Math.round(((u - GLINT[0]) / (GLINT[1] - GLINT[0])) * 19);
-      for (let j = 0; j < 4; j++) if (p[(y + j) * W + DX] === STEEL) set(p, DX - (j >> 1), y + j, BONE);
+      const y = 7 + Math.round(((u - GLINT[0]) / (GLINT[1] - GLINT[0])) * 21);
+      for (let j = 0; j < 4; j++) if (p[(y + j) * W + DX - 1] === STEEL) set(p, DX - 1, y + j, BONE);
     }
     return emit(p, color);
   };
