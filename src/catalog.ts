@@ -21,7 +21,7 @@ export const OWN = PACKS.map(([pack]) => pack);
 /** Those of them that are prototypes, listed only when asked for. */
 export const PROTOTYPES = PACKS.filter(([, , prototype]) => prototype).map(([pack]) => pack);
 // Other names a pack answers to.
-const ALIASES: Record<string, string> = { voyages: "season-one", "season-1": "season-one", s1: "season-one" };
+const ALIASES: Record<string, string> = { voyages: "season-one", "season-1": "season-one", s1: "season-one", hearts: "resilient-hearts", shirts: "resilient-hearts" };
 
 /** What is listed beside season one and the logo: ahoy's prototypes, and the ascii.rest library. */
 export interface Shown {

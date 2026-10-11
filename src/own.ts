@@ -130,10 +130,12 @@ import * as xMarksTheSpot from "./pieces/x-marks-the-spot.ts";
 
 /**
  * The groups, as listed, with the heading the picker gives each, and whether it is a prototype: the packs made on
- * the way to the scenes, which are listed only when asked for.
+ * the way to the scenes, which are listed only when asked for. Resilient Hearts is the three designs on the
+ * shirts sold for Resilient Hearts Animal Sanctuary, each taken out of the prototype pack it was made in.
  */
 export const PACKS: [pack: string, heading: string, prototype?: boolean][] = [
   ["season-one", "season one (2026)"],
+  ["resilient-hearts", "Resilient Hearts (2026)"],
   ["aws", "just for fun"],
   ["pirate", "pirate pack", true],
   ["pixels", "pirate pixels", true],
@@ -153,7 +155,6 @@ export const OWN_PIECES: [slug: string, pack: string, piece: Piece][] = [
   ["anchor", "pirate", anchor],
   ["ahoy", "pirate", ahoy],
   ["pirate-heart", "pirate", pirateHeart],
-  ["sea-dog", "pixels", seaDog],
   ["sea-dog-2", "pixels", seaDog2],
   ["doubloon", "pixels", doubloon],
   ["lit-fuse", "pixels", litFuse],
@@ -196,7 +197,6 @@ export const OWN_PIECES: [slug: string, pack: string, piece: Piece][] = [
   ["cutlass-bite", "rogers", cutlassBite],
   ["pierced-skull", "rogers", piercedSkull],
   ["crowned-skull", "rogers", crownedSkull],
-  ["fire-roger", "rogers", fireRoger],
   ["red-roger", "rogers", redRoger],
   ["ghost-roger", "rogers", ghostRoger],
   ["laughing-roger", "rogers", laughingRoger],
@@ -215,7 +215,6 @@ export const OWN_PIECES: [slug: string, pack: string, piece: Piece][] = [
   ["snake-roger", "rogers", snakeRoger],
   ["spider-roger", "rogers", spiderRoger],
   ["drowned-roger", "rogers", drownedRoger],
-  ["blackbeard", "lore", blackbeard],
   ["calico-jack", "lore", calicoJack],
   ["queen-annes-revenge", "lore", queenAnnesRevenge],
   ["black-bart", "lore", blackBart],
@@ -263,5 +262,8 @@ export const OWN_PIECES: [slug: string, pack: string, piece: Piece][] = [
   ["aurora-passage", "season-one", auroraPassage],
   ["volcano-isle", "season-one", volcanoIsle],
   ["lighthouse-reef", "season-one", lighthouseReef],
+  ["fire-roger", "resilient-hearts", fireRoger],
+  ["blackbeard", "resilient-hearts", blackbeard],
+  ["sea-dog", "resilient-hearts", seaDog],
   ["aws", "aws", aws],
 ];

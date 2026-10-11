@@ -23,11 +23,11 @@ const HELP = `ahoy ${pkg.version}: ascii art in your terminal
   ahoy saver [what]...      screensaver; rotates through every piece, or the ones you name
   ahoy list                 every piece, by group
 
-  what: a piece (kraken-rising), a group (season-one, aws) or all, separated by
+  what: a piece (kraken-rising), a group (season-one, resilient-hearts, aws) or all, separated by
         spaces or commas. The screensaver plays all that is listed by default.
 
-  ahoy lists season one, its painted pirate scenes, and the AWS logo. With
-  --prototypes it lists its prototypes too, the packs made on the way there
+  ahoy lists season one, its painted pirate scenes, the three Resilient Hearts
+  shirt designs, and the AWS logo. With --prototypes it lists its prototypes too, the packs made on the way there
   (pirate, pixels, rogers, lore), and with --all the whole ascii.rest library
   (https://ascii.rest). Any piece or group can be named whether it is listed
   or not.
@@ -39,13 +39,13 @@ const HELP = `ahoy ${pkg.version}: ascii art in your terminal
   -p, --prototypes          list ahoy's prototypes too (p in the picker)
   -a, --all                 list the ascii.rest library too
   -o, --out <folder>        where e saves a paused frame (default: this folder)
-      --scenes <how>        how a scene is drawn: crisp (the default), dots or soft;
+      --scenes <how>        how a scene is drawn: crisp (the default), halftone or soft;
                             d changes it as you watch
   -h, --help                this help
   -v, --version             the version
 
   keys: ←/→ skip · space pause · ,/. a frame back or on · m mono · t light/dark
-        d the next way of drawing a scene (crisp, dots, soft)
+        d the next way of drawing a scene (crisp, halftone, soft)
         q back or quit · in the picker, x marks pieces for s, the screensaver
         e, when paused, saves the frame as a 1500x1500 PNG (transparent) and JPEG
 

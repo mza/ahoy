@@ -1,6 +1,6 @@
 # Ahoy for macOS
 
-ahoy as a native macOS screensaver. Season one's scenes and the AWS logo (the
+ahoy as a native macOS screensaver. Season one's scenes, the Resilient Hearts designs and the AWS logo (the
 pieces ahoy lists by default; the prototypes are left out) play full screen one after
 another, dissolving from one into the next, each somewhere new on the screen
 so nothing burns in. They run live in JavaScriptCore, from the same code as the
