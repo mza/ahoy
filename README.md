@@ -1,6 +1,6 @@
 # ahoy
 
-Animated ascii art in your terminal: 56 pirate pieces in three packs, *pirate lore* (animated logos from the golden age of piracy), *pirate scenes* (big painted halftone scenes) and the original *pirate pack*, plus the AWS logo, just for fun. Browse them with a live preview, play one full screen, or leave a screensaver running.
+Animated ascii art in your terminal: 80 pirate pieces in four packs, the original *pirate pack*, *pirate pixels* (chunky pixel art in a few flat colours), *pirate lore* (animated logos from the golden age of piracy) and *pirate scenes* (big painted halftone scenes), plus the AWS logo, just for fun. Browse them with a live preview, play one full screen, or leave a screensaver running.
 
 The pieces are built on [ascii.rest](https://github.com/bas3line/ascii), and its library of 200+ more pieces is a flag away: `--all`.
 
@@ -38,7 +38,7 @@ ahoy list                        # every piece, by group
 ahoy --all                       # the picker, with the ascii.rest library too
 ```
 
-A selection can name pieces (`galleon`), groups (`pirate`, `lore`, `voyages`, `aws`) or `all`, separated by spaces or commas. Pieces and groups from the [ascii.rest library](https://ascii.rest) (`donut`, `scenes`, `logos`, `distros`, ...) can be named too; with `--all` they're also listed in the picker, in `ahoy list` and under `all`.
+A selection can name pieces (`galleon`), groups (`pirate`, `pixels`, `lore`, `voyages`, `aws`) or `all`, separated by spaces or commas. Pieces and groups from the [ascii.rest library](https://ascii.rest) (`donut`, `scenes`, `logos`, `distros`, ...) can be named too; with `--all` they're also listed in the picker, in `ahoy list` and under `all`.
 
 The screensaver shows no text unless you press a key, and puts each piece somewhere different on the screen, so nothing burns in.
 
@@ -67,15 +67,17 @@ The screensaver shows no text unless you press a key, and puts each piece somewh
 | `-l`, `--light` | for a light terminal |
 | `-a`, `--all` | list the ascii.rest library too |
 
-The biggest pieces are 80×32. In a smaller terminal, pieces drawn in blocks or dense fill are shrunk to fit, and line art is cropped to its middle rather than torn. Coloured pieces need a terminal with truecolor (iTerm2, Ghostty, WezTerm, kitty, Alacritty, Windows Terminal); elsewhere, use `--mono`. When the output isn't a terminal, `ahoy <piece>` prints the piece's first frame as plain text: `ahoy galleon > galleon.txt`.
+Most pieces are up to 80×32, and the scenes are shrunk to fit. In a smaller terminal, pieces drawn in blocks or dense fill are shrunk to fit, and line art is cropped to its middle rather than torn. Coloured pieces need a terminal with truecolor (iTerm2, Ghostty, WezTerm, kitty, Alacritty, Windows Terminal); elsewhere, use `--mono`. When the output isn't a terminal, `ahoy <piece>` prints the piece's first frame as plain text: `ahoy galleon > galleon.txt`.
 
 ## The pieces
+
+**pirate pixels** (`pixels`): `doubloon`, `lit-fuse`, `dead-eye`, `gold-tooth`, `skull-candle`, `fish-bones`, `crossed-cutlasses`, `dagger`, `cannon`, `skeleton-key`, `tricorn`, `rum-bottle`, `x-marks-the-spot`, `desert-island`, `sloop`, `jolly-boat`, `ship-in-a-bottle`, `walk-the-plank`, `shark-fin`, `whale-tail`, `sea-serpent`, `octopus`, `pirate-crab`, `seagull`. Sprites like an 8-bit game's, drawn in half blocks, two square pixels a cell, in two to five flat colours on black.
 
 **pirate lore** (`lore`): `blackbeard`, `calico-jack`, `queen-annes-revenge`, `black-bart`, `pieces-of-eight`, `no-prey-no-pay`, `tortuga`, `hourglass`, `black-spot`, `flying-dutchman`, `compass-rose`, `wanted-poster`, `eight-bells`, `stede-bonnet`, `ghost-captain`, `cutlass`, `broadside`, `dead-mans-chest`, `grog`, `davy-jones-locker`, `spyglass`, `iron-hook`, `skull-moon`, `edward-low`, `thomas-tew`, `ships-lantern`, `three-skulls`, `articles`, `powder-keg`, `joli-rouge`, `crossed-flintlocks`, `crows-nest`, `message-in-a-bottle`. Animated logos in terminal character art on black, most of them historical pirate flags and the stuff of pirate legend.
 
 **pirate scenes** (`voyages`): `skull-island`, `storm-at-sea`, `port-royal`, `pirate-cove`, `glowing-wake`, `sea-battle`, `burning-ship`, `masthead-dawn`, `sunken-galleon`, `wreck-coast`, `treasure-cave`, `pirate-tavern`. 200×100 halftone scenes in colour, in the style of ascii.rest's own; in a terminal they're shrunk to fit, so they look best in a big window, or full screen in the macOS screensaver.
 
-**the pirate pack**:
+**the pirate pack** (`pirate`):
 `galleon`, `pirate-flag`, `jolly-roger`, `kraken`, `parrot`, `ships-wheel`, `treasure-map`, `treasure-chest`, `anchor`, `ahoy` and `pirate-heart`, each in a different style: dense ascii fill, box-drawing line art, old-school slashes, shaded blocks, procedural shading. They live in [`src/pieces`](src/pieces) and follow the [ascii.rest piece contract](https://github.com/bas3line/ascii/blob/main/CONTRIBUTING.md), so any of them could be contributed upstream.
 
 ## Develop

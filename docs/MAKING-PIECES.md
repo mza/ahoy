@@ -7,13 +7,13 @@ How the pirate pieces were made, what the user liked and didn't, and how to add 
 The user has been clear, and has rejected work that ignored it:
 
 - **Black background.** Scenes use `ground: "#000000"`; logos sit on black.
-- **ASCII / terminal-native.** The picture must be made of visible characters: letters, `# @ % & * + = - : . / \ | _ ( ) [ ] < > ~ ^ ' "`, box drawing (`╭╮╰╯─│═║╔╗╚╝╱╲`), shades `░▒▓█` for texture. It should look like it came out of a terminal. The vibe reference is [omarchy.org](https://omarchy.org). Flat pixel art made only of `█▀▄` half blocks reads as "graphical" and was mostly rejected; `blackbeard` is the one exception the user loved.
+- **ASCII / terminal-native, or pixel art.** For the lore logos the picture is made of visible characters: letters, `# @ % & * + = - : . / \ | _ ( ) [ ] < > ~ ^ ' "`, box drawing (`╭╮╰╯─│═║╔╗╚╝╱╲`), shades `░▒▓█` for texture. It should look like it came out of a terminal. The vibe reference is [omarchy.org](https://omarchy.org). Flat pixel art made only of `█▀▄` half blocks was mostly rejected early on, `blackbeard` aside, but the user has since asked for more of exactly that: "simpler, pixel art style, in fewer colors", in the spirit of the original pirate pack. That is the `pixels` pack; see *Pixel art in half blocks* below.
 - **Restrained palette.** Bone/off-white plus one or two accents (blood red, doubloon gold, ghost cyan, phosphor green), a few shades each, like a terminal theme.
 - **A logo you'd put on a shirt.** One bold centred emblem, a strong silhouette, readable at a glance from across a room. Fewer, bigger shapes beat detail.
 - **Pirate lore.** Real flags (Blackbeard, Calico Jack, Black Bart, Edward Low, Stede Bonnet, Thomas Tew, Condent, the joli rouge) and the stuff of legend (black spot, Davy Jones' locker, Flying Dutchman, the articles, pieces of eight).
 - **Not wanted:** kitsch tattoo flash (a whole 12-piece set was dropped), cartoon americana, mixed styles in one piece.
 
-Favourites to calibrate against: `blackbeard`, `calico-jack`, `no-prey-no-pay`, `pieces-of-eight`, `articles`, `eight-bells`, `joli-rouge`, `tortuga`.
+Favourites to calibrate against: `blackbeard`, `calico-jack`, `no-prey-no-pay`, `pieces-of-eight`, `articles`, `eight-bells`, `joli-rouge`, `tortuga`; and, named later, the pirate pack, `hourglass`, `stede-bonnet`, `ghost-captain`, `cutlass`, `grog`, `broadside` and `skull-moon`. The painted scenes are "ok"; no more of them for now.
 
 ## The piece contract
 
@@ -33,7 +33,7 @@ Never put non-ASCII characters (`░`, `█`, `╔`, `·`...) inside a `String.r
 
 ## Checking a piece
 
-ahoy has no contract checker of its own; ascii.rest's is the one to use. Keep a clone of [bas3line/ascii](https://github.com/bas3line/ascii) (`~/src/ascii` on the original machine), drop the file in its `src/pieces/`, and:
+`node tools/art/check.mjs <slug>...` checks pieces where they are, in `src/pieces/`: the meta, exact frame size, allowed characters, determinism, movement, colour indexes, speed and the source rules. It is ahoy's own stand-in, written from the contract; ascii.rest's checker is the authority if a piece is going upstream. For that, keep a clone of [bas3line/ascii](https://github.com/bas3line/ascii) (`~/src/ascii` on the original machine), drop the file in its `src/pieces/`, and:
 
 ```sh
 npm run check -- <slug>          # the contract, speed, distinct frames
@@ -54,7 +54,7 @@ python3 -E tools/art/render-dots.py  /tmp/x.json /tmp/x.png 5   # a cell: 1 scen
 sh tools/art/sheet.sh /tmp/sheet.png 0.5 calico-jack hourglass  # a contact sheet, two to a row
 ```
 
-The PIL renders square off box-drawing corners and draw `░▒▓` as tinted blocks; a real terminal is a little nicer. To see ahoy itself (picker, player, screensaver) without a terminal, run it in a pty and replay what it wrote:
+The renders use Menlo, or the first monospace font they find on Linux (set `AHOY_FONT` to a `.ttf` to choose). The PIL renders square off box-drawing corners and draw `░▒▓` as tinted blocks; a real terminal is a little nicer. To see ahoy itself (picker, player, screensaver) without a terminal, run it in a pty and replay what it wrote:
 
 ```sh
 (sleep 2; printf 'jj'; sleep 1; printf 'q') | script -q /tmp/cap.raw sh -c 'stty cols 120 rows 40; ./dist/ahoy'
@@ -81,6 +81,15 @@ The house style: bold silhouettes filled with one character per material (`8` bo
 5. Animate with overlays on the precomputed art: glints that sweep a diagonal band and turn solid cells to `/` or `=`, ember eyes (`·•●` in red), a cloth "ripple" that shifts shade bands, a few precomputed poses (a jaw, a flexing arm, a bow pitching) swapped by time. Pitch or move by **whole cells**, or edges re-quantize and shimmer.
 
 `tools/art/image-to-dense.py` does the same from a single white-on-black image (how `aws.ts` was made from a logo). `blackbeard` was sampled from the user's own image of the flag.
+
+### Pixel art in half blocks (the `pixels` pack)
+
+Sprites like an 8-bit game's: a canvas of square pixels, one a cell wide and half a cell tall (80×64 for a full-size piece), printed as `█ ▀ ▄` and nothing else, in two to four flat colours on black. `lit-fuse` is the one to copy: its "pixel kit" (`set`, `rect`, `disc`, `line`, `sprite`, `emit`) is pasted into each piece, since a piece can import nothing.
+
+- **One bold, chunky emblem** filling most of the frame. Draw faces and small features as `sprite` rows at `scale` 2, so they stay chunky; primitives suit discs, hulls, blades and waves.
+- **A cell has one ink.** Where a cell's two pixels differ in colour, `emit` takes the one further down the palette, so keep colour boundaries on even pixel rows or put a black gap between colours.
+- **Black gaps, two pixels wide,** wherever one shape sits on another: in one ink every pixel is the same, and the gaps are all that is left of the drawing.
+- **Animate in poses and whole pixels:** a blink, a walk cycle, a glint, a bob. Precompute what never moves and `set` it back each frame.
 
 ### ANSI Shadow lettering
 
@@ -123,8 +132,8 @@ Most pieces were made by parallel sub-agents, two pieces each, then reviewed tog
 
 ## Adding a piece to ahoy
 
-1. Put `src/pieces/<slug>.ts` in place (checked in an ascii.rest clone as above).
-2. Import it in [`src/own.ts`](../src/own.ts) and add it to its group: `pirate`, `lore` or `voyages`. The terminal app and the screensaver both play that list.
+1. Put `src/pieces/<slug>.ts` in place, and check it: `node tools/art/check.mjs <slug>`.
+2. Import it in [`src/own.ts`](../src/own.ts) and add it to its group: `pirate`, `pixels`, `lore` or `voyages`. The terminal app and the screensaver both play that list.
 3. `npm run typecheck`, then `node src/cli.ts <slug>` and `./dist/ahoy` after `npm run build`. Check that `./dist/ahoy all | grep '\\u[0-9a-f]\{4\}'` prints nothing.
 4. `npm run saver` rebuilds `macos/build/Ahoy.saver`; snapshot it to check.
 5. Update the piece lists in the README, and regenerate the contact sheets in `docs/sheets/` if you like.
