@@ -46,14 +46,14 @@ const HELP = `ahoy ${pkg.version}: ascii art in your terminal
   -o, --out <folder>        where e saves a paused frame (default: this folder)
       --cell <shape>        a character cell's height over its width, if the
                             terminal does not say (most are about 2)
-      --scenes <how>        how a scene is drawn: ascii (the default), dense, braille, crisp
+      --scenes <how>        how a scene is drawn: dense (the default), ascii, braille, crisp
                             or soft;
                             d changes it as you watch
   -h, --help                this help
   -v, --version             the version
 
   keys: ←/→ skip · space pause · ,/. a frame back or on · m mono · t light/dark
-        d the next way of drawing a scene (ascii, dense, braille, crisp, soft)
+        d the next way of drawing a scene (dense, ascii, braille, crisp, soft)
         q back or quit · in the picker, x marks pieces for s, the screensaver
         e, when paused, saves the frame as a 1500x1500 PNG (transparent) and JPEG
 
@@ -88,7 +88,7 @@ async function main() {
   if (values.version) return void console.log(pkg.version);
   const dwell = values.dwell === undefined ? 15 : Number(values.dwell);
   if (!(dwell > 0)) throw new Usage(`--dwell takes a number of seconds above 0, not "${values.dwell}"`);
-  const scenes = (values.scenes ?? "ascii") as Scenes;
+  const scenes = (values.scenes ?? "dense") as Scenes;
   if (!SCENES.includes(scenes)) throw new Usage(`--scenes takes ${SCENES.join(", ")}, not "${values.scenes}"`);
   const cell = values.cell === undefined ? undefined : Number(values.cell);
   if (cell !== undefined && !(cell >= 0.5 && cell <= 4)) throw new Usage(`--cell takes a cell's height over its width, about 2, not "${values.cell}"`);

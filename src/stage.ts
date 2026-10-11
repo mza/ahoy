@@ -30,7 +30,7 @@ import type { Frame } from "./types.ts";
  * half blocks; or in ascii.rest's soft tones.
  */
 export type Scenes = "ascii" | "dense" | "braille" | "crisp" | "soft";
-export const SCENES: Scenes[] = ["ascii", "dense", "braille", "crisp", "soft"];
+export const SCENES: Scenes[] = ["dense", "ascii", "braille", "crisp", "soft"];
 
 export interface Look {
   mono: boolean;
@@ -50,6 +50,10 @@ const TONES = [" ", "░", "▒", "▓", "█"];
 // one or two of them do not line up from cell to cell.
 const BRAILLE = [[0x01, 0x08, 0x02, 0x10], [0x04, 0x20, 0x40, 0x80]];
 const LIT = [[0, 3, 1, 2], [3, 0, 2, 1]];
+// The dots a terminal has, smallest to largest, each for the cover up to its mark. Measured in a terminal (foot, with
+// JetBrains Mono, a cell 14 pixels by 33) they are about 3, 6, 11, 14 and 18 pixels across, so the largest laps over
+// its neighbours and the three a scene is written in, the first, second and fourth, leave most of a cell empty.
+const LADDER: [number, string][] = [[0.05, " "], [0.14, "·"], [0.36, "•"], [0.62, "⏺"], [0.85, "●"], [Infinity, "⬤"]];
 // How much of its cell each of a scene's dots covers, a full dot taken as all of it.
 const COVER: Record<string, number> = { " ": 0, "·": 0.19, "•": 0.55, "●": 1 };
 // Frames sampled to find where a piece draws and what it draws with.
@@ -211,8 +215,8 @@ export class Stage {
                 sum += c;
                 if (c > most) (most = c), (at = sy * cols + sx);
               }
-            const c = (sum / ((y1 - y0) * (x1 - x0))) * 1.15;
-            pic.ch[k] = c < 0.07 ? " " : c < 0.32 ? "·" : c < 0.7 ? "•" : "●";
+            const c = sum / ((y1 - y0) * (x1 - x0));
+            pic.ch[k] = LADDER.find(([upTo]) => c < upTo)![1];
             pic.fg[k] = inks[color[at]] ?? inks[0];
           }
         }
