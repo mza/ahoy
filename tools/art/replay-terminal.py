@@ -51,5 +51,12 @@ for yy in range(H):
         if c == "█": d.rectangle([X, Y, X + cw - 1, Y + chh - 1], fill=col)
         elif c == "▀": d.rectangle([X, Y, X + cw - 1, Y + chh // 2 - 1], fill=col)
         elif c == "▄": d.rectangle([X, Y + chh // 2, X + cw - 1, Y + chh - 1], fill=col)
+        elif 0x2800 <= ord(c) <= 0x28ff:
+            # braille as a terminal that draws it itself does: eight dots, two across and four down
+            bits, w = ord(c) - 0x2800, max(1, min(cw // 4, chh // 8))
+            for n, (bx, by) in enumerate([(0, 0), (0, 1), (0, 2), (1, 0), (1, 1), (1, 2), (0, 3), (1, 3)]):
+                if bits & (1 << n):
+                    x0, y0 = X + round((bx + 0.5) * cw / 2 - w / 2), Y + round((by + 0.5) * chh / 4 - w / 2)
+                    d.rectangle([x0, y0, x0 + w - 1, y0 + w - 1], fill=col)
         else: d.text((X, Y), c, font=f, fill=col)
 img.save(sys.argv[2])

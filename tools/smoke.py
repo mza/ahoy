@@ -63,7 +63,7 @@ if __name__ == "__main__":
     jobs += [("picker --all", ["--all"], c, r, [b"G", b"k", b"\r", b"q", b"q"], 0.8) for c, r in sizes]
     jobs += [("saver", ["saver", "--shuffle", "-d", "1"], c, r, [b"\x1b[C", b" ", b" ", b"q"], 2.5) for c, r in sizes]
     jobs += [("saver pixels --mono", ["saver", "pixels", "-d", "1", "--mono"], c, r, [b"q"], 2.5) for c, r in sizes]
-    jobs += [(f"scene {how}", ["kraken-rising", "--scenes", how], c, r, [b"d", b"d", b" ", b"d", b"q"], 0.8) for how in ["ascii", "dense", "crisp", "soft"] for c, r in [(420, 104), (220, 60), (90, 28)]]
+    jobs += [(f"scene {how}", ["kraken-rising", "--scenes", how], c, r, [b"d", b"d", b" ", b"d", b"q"], 0.8) for how in ["ascii", "dense", "braille", "crisp", "soft"] for c, r in [(420, 104), (220, 60), (90, 28)]]
     jobs += [("picker --prototypes", ["--prototypes"], c, r, [b"G", b"p", b"j", b"\r", b"q", b"q"], 0.8) for c, r in sizes]
     jobs += [("saver lore --light", ["saver", "lore", "-d", "1", "--light"], c, r, [b"q"], 2.5) for c, r in sizes]
     # a frame saved from a pause: a piece in blocks, one in letters, one in box drawing and a scene

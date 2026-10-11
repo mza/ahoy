@@ -8,9 +8,11 @@
  *  - a scene is drawn in the dots it is made of, each a character in its own
  *    colour on the ground with a space after it, so that they stand on a
  *    square grid as a page draws them; or a dot to every cell, which is
- *    twice the dots across but leaves them in rows; or a cell to half a
- *    terminal cell, each the colour of its dot on the ground, sharp; or,
- *    softly, by ascii.rest's own painter, which blurs it first;
+ *    twice the dots across but leaves them in rows; or in braille, a cell of
+ *    the scene the four dots of half a terminal cell, as many lit as its dot
+ *    is big, which is the most of a scene a terminal can show in dots; or a
+ *    cell to half a terminal cell, each the colour of its dot on the ground,
+ *    sharp; or, softly, by ascii.rest's own painter, which blurs it first;
  *  - a picture in block elements is resampled at half-cell height, two pixels a
  *    cell, and drawn again in blocks, so it shrinks as an image does;
  *  - a picture in dense ascii fill keeps, for each cell, the strongest
@@ -24,10 +26,11 @@ import type { Frame } from "./types.ts";
 
 /**
  * How a scene is drawn in a terminal: in its own dots on a square grid, as a page draws it; in its dots a character
- * to a cell, closer together across than down; in sharp half blocks; or in ascii.rest's soft tones.
+ * to a cell, closer together across than down; in braille, each of its dots a cluster of a cell's eight; in sharp
+ * half blocks; or in ascii.rest's soft tones.
  */
-export type Scenes = "ascii" | "dense" | "crisp" | "soft";
-export const SCENES: Scenes[] = ["ascii", "dense", "crisp", "soft"];
+export type Scenes = "ascii" | "dense" | "braille" | "crisp" | "soft";
+export const SCENES: Scenes[] = ["ascii", "dense", "braille", "crisp", "soft"];
 
 export interface Look {
   mono: boolean;
@@ -43,6 +46,10 @@ const HALVES: Record<string, [number, number]> = {
   "▀": [1, 0], "▄": [0, 1], "▌": [0.5, 0.5], "▐": [0.5, 0.5],
 };
 const TONES = [" ", "░", "▒", "▓", "█"];
+// The braille dots of a cell's upper and lower halves, two by two each, and the orders a half's are lit in, so that
+// one or two of them do not line up from cell to cell.
+const BRAILLE = [[0x01, 0x08, 0x02, 0x10], [0x04, 0x20, 0x40, 0x80]];
+const LIT = [[0, 3, 1, 2], [3, 0, 2, 1]];
 // How much of its cell each of a scene's dots covers, a full dot taken as all of it.
 const COVER: Record<string, number> = { " ": 0, "·": 0.19, "•": 0.55, "●": 1 };
 // Frames sampled to find where a piece draws and what it draws with.
@@ -224,6 +231,19 @@ export class Stage {
         for (let j = 0, k = 0; j < ph; j++)
           for (let i = 0; i < pw; i++, k++) {
             const a = 2 * j * pw + i, b = 2 * j + 1 < half ? a + pw : -1;
+            if (this.look.scenes === "braille") {
+              // one, two or all four of a half's dots by how big the scene's dot there is; the cell has one ink for
+              // its two halves, the heavier one's
+              let bits = 0;
+              [a, b].forEach((at, h) => {
+                const c = at < 0 ? 0 : cover[at], n = c > 0.8 ? 4 : c > 0.4 ? 2 : c > 0.1 ? 1 : 0;
+                for (let q = 0; q < n; q++) bits |= BRAILLE[h][LIT[(i + j + h) & 1][q]];
+              });
+              pic.ch[k] = bits ? String.fromCodePoint(0x2800 + bits) : " ";
+              pic.fg[k] = b >= 0 && cover[b] > cover[a] ? inked[b] : inked[a];
+              pic.bg[k] = ground;
+              continue;
+            }
             const top = mix(ground, inked[a], Math.min(1, cover[a])), bottom = b < 0 ? ground : mix(ground, inked[b], Math.min(1, cover[b]));
             pic.ch[k] = top === bottom ? " " : "▀";
             pic.fg[k] = top;
