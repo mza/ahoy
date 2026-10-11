@@ -40,7 +40,8 @@ const HELP = `ahoy ${pkg.version}: ascii art in your terminal
 
   -d, --dwell <seconds>     seconds a screensaver shows each piece (default 90 in a
                             browser, 15 in the terminal)
-  -s, --shuffle             screensaver in a random order
+  -s, --shuffle             screensaver in a random order (it starts on a random
+                            piece either way)
   -b, --browser             play the pieces you name in a browser too, full screen
   -T, --terminal            keep the screensaver in the terminal
   -m, --mono                coloured pieces in the terminal's own colour
@@ -120,6 +121,9 @@ async function main() {
   const words = saver ? (rest.length ? rest : [DEFAULT_SAVER]) : positionals;
   const { picked, unknown } = select(everything, words, shown);
   if (unknown.length) throw new Usage(`no piece or group named ${unknown.map((w) => `"${w}"`).join(", ")}; see ahoy list --prototypes --all`);
+
+  // a screensaver starts on a piece picked at random, and goes on from there in order
+  if (saver && picked.length > 1) picked.push(...picked.splice(0, Math.floor(Math.random() * picked.length)));
 
   // In a browser: a screensaver unless it is kept in the terminal, and anything else that asks to be. A machine
   // with no screen to open one on, over ssh say, keeps the screensaver in the terminal too.
