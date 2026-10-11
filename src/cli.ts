@@ -4,8 +4,9 @@
  *
  *   ahoy                     pick a piece from a list, each one playing as you go
  *   ahoy <piece>...          play pieces full screen
- *   ahoy saver [what]...     a screensaver: every piece, or the ones you name
- *   ahoy saver --browser     the same in a browser filling the screen
+ *   ahoy saver [what]...     a screensaver, in a browser filling the screen:
+ *                            every piece, or the ones you name
+ *   ahoy saver --terminal    the same in the terminal
  *   ahoy list                every piece, by group
  *
  * It lists season one and the AWS logo; --prototypes and --all list the rest.
@@ -22,9 +23,10 @@ const HELP = `ahoy ${pkg.version}: ascii art in your terminal
 
   ahoy                      pick a piece; the one under the cursor plays beside the list
   ahoy <piece>...           play pieces full screen (←/→ to move between them)
-  ahoy saver [what]...      screensaver; rotates through every piece, or the ones you name
-  ahoy saver --browser      the screensaver in a browser filling the screen, where a
-                            scene is drawn as a page draws it, in round dots
+  ahoy saver [what]...      screensaver, in a browser filling the screen, where a scene
+                            is drawn as a page draws it, in round dots; it fades from
+                            each piece to the next, every piece or the ones you name
+  ahoy saver --terminal     the screensaver in the terminal
   ahoy list                 every piece, by group
 
   what: a piece (kraken-rising), a group (season-one, resilient-hearts, aws) or all, separated by
@@ -36,9 +38,11 @@ const HELP = `ahoy ${pkg.version}: ascii art in your terminal
   (https://ascii.rest). Any piece or group can be named whether it is listed
   or not.
 
-  -d, --dwell <seconds>     seconds a screensaver shows each piece (default 15)
+  -d, --dwell <seconds>     seconds a screensaver shows each piece (default 90 in a
+                            browser, 15 in the terminal)
   -s, --shuffle             screensaver in a random order
-  -b, --browser             play in a browser, full screen, not in the terminal
+  -b, --browser             play the pieces you name in a browser too, full screen
+  -T, --terminal            keep the screensaver in the terminal
   -m, --mono                coloured pieces in the terminal's own colour
   -l, --light               for a light terminal
   -p, --prototypes          list ahoy's prototypes too (p in the picker)
@@ -58,7 +62,7 @@ const HELP = `ahoy ${pkg.version}: ascii art in your terminal
         e, when paused, saves the frame as a 1500x1500 PNG (transparent) and JPEG
 
   ahoy saver
-  ahoy saver --shuffle --dwell 10
+  ahoy saver --shuffle --dwell 30
   ahoy saver kraken-rising,ghost-ship,aws
   ahoy saver season-one rogers
   ahoy burning-ship
@@ -73,6 +77,7 @@ async function main() {
       dwell: { type: "string", short: "d" },
       shuffle: { type: "boolean", short: "s" },
       browser: { type: "boolean", short: "b" },
+      terminal: { type: "boolean", short: "T" },
       mono: { type: "boolean", short: "m" },
       light: { type: "boolean", short: "l" },
       all: { type: "boolean", short: "a" },
@@ -86,13 +91,13 @@ async function main() {
   });
   if (values.help) return void process.stdout.write(HELP);
   if (values.version) return void console.log(pkg.version);
-  const dwell = values.dwell === undefined ? 15 : Number(values.dwell);
-  if (!(dwell > 0)) throw new Usage(`--dwell takes a number of seconds above 0, not "${values.dwell}"`);
+  const dwell = values.dwell === undefined ? undefined : Number(values.dwell);
+  if (dwell !== undefined && !(dwell > 0)) throw new Usage(`--dwell takes a number of seconds above 0, not "${values.dwell}"`);
   const scenes = (values.scenes ?? "dense") as Scenes;
   if (!SCENES.includes(scenes)) throw new Usage(`--scenes takes ${SCENES.join(", ")}, not "${values.scenes}"`);
   const cell = values.cell === undefined ? undefined : Number(values.cell);
   if (cell !== undefined && !(cell >= 0.5 && cell <= 4)) throw new Usage(`--cell takes a cell's height over its width, about 2, not "${values.cell}"`);
-  const settings = { cell, dwell, shuffle: !!values.shuffle, mono: !!values.mono, light: !!values.light, scenes, out: values.out ?? "." };
+  const settings = { cell, dwell: dwell ?? 15, shuffle: !!values.shuffle, mono: !!values.mono, light: !!values.light, scenes, out: values.out ?? "." };
 
   const everything = await catalog();
   const shown = { prototypes: !!values.prototypes, library: !!values.all };
@@ -116,8 +121,10 @@ async function main() {
   const { picked, unknown } = select(everything, words, shown);
   if (unknown.length) throw new Usage(`no piece or group named ${unknown.map((w) => `"${w}"`).join(", ")}; see ahoy list --prototypes --all`);
 
-  // in a browser: the pieces named, or all that is listed, one after another
-  if (values.browser) return serve(picked.length ? picked : entries, settings);
+  // In a browser: a screensaver unless it is kept in the terminal, and anything else that asks to be. A machine
+  // with no screen to open one on, over ssh say, keeps the screensaver in the terminal too.
+  const screen = process.platform !== "linux" || !!process.env.WAYLAND_DISPLAY || !!process.env.DISPLAY || !!process.env.AHOY_BROWSER;
+  if (values.browser || (saver && !values.terminal && screen)) return serve(picked.length ? picked : entries, { ...settings, dwell: dwell ?? 90 });
 
   if (!tty()) {
     // a pipe or a log: the first frame of each, as text

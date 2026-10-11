@@ -30,9 +30,9 @@ To uninstall, delete the binary: `rm ~/.local/bin/ahoy`.
 ahoy                             # pick a scene; the one under the cursor plays as you go
 ahoy kraken-rising               # play one full screen
 ahoy ghost-ship burning-ship aws # play a few, ←/→ to move between them
-ahoy saver                       # screensaver: season one, one scene after another
+ahoy saver                       # screensaver, full screen in a browser: each scene for 90 seconds, fading into the next
 ahoy saver --shuffle -d 30       # in a random order, 30 seconds each
-ahoy saver --browser             # the screensaver in a browser, full screen: the scenes as a page draws them
+ahoy saver --terminal            # the screensaver in the terminal
 ahoy saver glowing-wake,aws      # just these
 ahoy saver season-one rogers     # season one, and the jolly rogers from the prototypes
 ahoy list                        # what's listed, by group
@@ -42,7 +42,7 @@ ahoy --all                       # and with the ascii.rest library
 
 A selection can name pieces (`ghost-ship`), groups (`season-one`, `resilient-hearts`, `aws`, and the prototype packs `pirate`, `pixels`, `rogers` and `lore`, or all of those as `prototypes`) or `all`, which is whatever is listed, separated by spaces or commas. A piece or a group can be named whether or not it is listed. Pieces and groups from the [ascii.rest library](https://ascii.rest) (`donut`, `scenes`, `logos`, `distros`, ...) can be named too; with `--all` they're also listed in the picker, in `ahoy list` and under `all`.
 
-The screensaver shows no text unless you press a key, and puts each piece somewhere different on the screen, so nothing burns in.
+The screensaver puts each piece somewhere different on the screen, so nothing burns in, and in the terminal shows no text unless you press a key.
 
 ![The screensaver playing the AWS logo](docs/screensaver.png)
 
@@ -66,9 +66,10 @@ The screensaver shows no text unless you press a key, and puts each piece somewh
 
 | Option | |
 | --- | --- |
-| `-d`, `--dwell <seconds>` | how long the screensaver shows each piece (default 15) |
+| `-d`, `--dwell <seconds>` | how long the screensaver shows each piece (default 90 in a browser, 15 in the terminal) |
 | `-s`, `--shuffle` | screensaver in a random order |
-| `-b`, `--browser` | play in a browser filling the screen, not in the terminal |
+| `-T`, `--terminal` | keep the screensaver in the terminal |
+| `-b`, `--browser` | play the pieces you name in a browser too, full screen |
 | `-m`, `--mono` | coloured pieces in the terminal's own colour |
 | `-l`, `--light` | for a light terminal |
 | `-p`, `--prototypes` | list ahoy's prototypes too |
@@ -81,14 +82,14 @@ Most pieces are up to 80×32, and the scenes are shrunk to fit. In a smaller ter
 
 ### In a browser
 
-A terminal draws a character to a cell, and a cell is about twice as tall as it is wide, so it cannot draw a scene as a page does: 200 by 100 round dots on a square grid. A browser can. `ahoy saver --browser` (or `-b` with any pieces) serves a page to this machine alone, sends it the frames, and opens it full screen with nothing round it, in Chromium, Chrome, Brave or Edge if one is installed, else in Firefox or your default browser. A key, a click or a real move of the mouse there ends it, or `Ctrl+C` in the terminal. `--dwell`, `--shuffle`, `--mono` and `--light` work as they do in the terminal. Set `AHOY_BROWSER` to another browser's command to use that, or to `none` to be told the address and open it yourself.
+A terminal draws a character to a cell, and a cell is about twice as tall as it is wide, so it cannot draw a scene as a page does: 200 by 100 round dots on a square grid. A browser can, so that is where the screensaver plays. `ahoy saver` serves a page to this machine alone, sends it the frames, and opens it full screen with nothing round it, in Chromium, Chrome, Brave or Edge if one is installed, else in Firefox or your default browser. Each piece stays for 90 seconds (`--dwell`) and fades into the next, in order or with `--shuffle`. A key, a click or a real move of the mouse there ends it, or `Ctrl+C` in the terminal. `--mono` and `--light` work as they do in the terminal, and `-b` plays any pieces you name the same way: `ahoy kraken-rising -b`. Set `AHOY_BROWSER` to another browser's command to use that, or to `none` to be told the address and open it yourself. With `--terminal`, or on a machine with no screen to open a browser on, the screensaver plays in the terminal, as `s` in the picker does.
 
 To have it come on when the machine is idle, give it to whatever watches for that. With hypridle:
 
 ```ini
 listener {
     timeout = 300
-    on-timeout = ahoy saver --browser --shuffle
+    on-timeout = ahoy saver --shuffle
 }
 ```
 

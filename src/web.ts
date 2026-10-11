@@ -2,8 +2,8 @@
  * The screensaver in a browser: a page that fills the screen and draws each
  * piece as a page does, a scene as its dots, round, on a square grid, which
  * no terminal can. ahoy serves the page to this machine alone, sends it the
- * frames as they come, and opens a browser on it with nothing round it; a
- * key or a click there ends it.
+ * frames as they come, and opens a browser on it with nothing round it; it
+ * fades from each piece to the next, and a key or a click there ends it.
  *
  * The pieces stay here: the page is told what to draw, a frame at a time,
  * so it is the same few lines whatever is played.
@@ -33,7 +33,7 @@ const PAGE = `<!doctype html>
 <title>ahoy</title>
 <style>
   html, body { margin: 0; height: 100%; background: #000; overflow: hidden; cursor: none; }
-  canvas { position: fixed; inset: 0; width: 100vw; height: 100vh; transition: opacity 1.2s ease; }
+  canvas { position: fixed; inset: 0; width: 100vw; height: 100vh; transition: opacity 3s ease-in-out; }
 </style>
 <canvas id="a"></canvas><canvas id="b" style="opacity: 0"></canvas>
 <script>
@@ -106,7 +106,11 @@ events.addEventListener("piece", (e) => {
   piece = JSON.parse(e.data);
   place = piece.drift ? [0.15 + 0.7 * Math.random(), 0.15 + 0.7 * Math.random()] : [0.5, 0.5];
   if (first) return;
+  // the canvas behind is cleared of the piece before last, and comes up as the one in front goes
   front = 1 - front;
+  const g = canvases[front].getContext("2d");
+  g.fillStyle = "#000";
+  g.fillRect(0, 0, canvases[front].width, canvases[front].height);
   canvases[front].style.opacity = 1;
   canvases[1 - front].style.opacity = 0;
 });

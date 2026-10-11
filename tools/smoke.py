@@ -56,7 +56,7 @@ def browser():
     """The screensaver served to a browser, with no browser opened: its page, a piece and a frame of it, and its end."""
     import urllib.request
     env = dict(os.environ, AHOY_BROWSER="none")
-    p = subprocess.Popen(CMD + ["saver", "--browser", "-d", "1"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, env=env)
+    p = subprocess.Popen(CMD + ["saver", "-d", "1"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, env=env)
     try:
         at = re.search(r"http://127\.0\.0\.1:\d+/", p.stdout.readline())
         if not at:
@@ -89,11 +89,11 @@ if __name__ == "__main__":
     picker = [b"j", b"j", b"p", b"G", b"g", b"p", b"p", b"t", b"t", b"m", b"/", b"skull", b"\r", b"x", b"\x1b[6~", b"\r", b"\x1b[C", b"\x1b[D", b"q", b"q"]
     jobs += [("picker", [], c, r, picker, 0.8) for c, r in sizes]
     jobs += [("picker --all", ["--all"], c, r, [b"G", b"k", b"\r", b"q", b"q"], 0.8) for c, r in sizes]
-    jobs += [("saver", ["saver", "--shuffle", "-d", "1"], c, r, [b"\x1b[C", b" ", b" ", b"q"], 2.5) for c, r in sizes]
-    jobs += [("saver pixels --mono", ["saver", "pixels", "-d", "1", "--mono"], c, r, [b"q"], 2.5) for c, r in sizes]
+    jobs += [("saver", ["saver", "--terminal", "--shuffle", "-d", "1"], c, r, [b"\x1b[C", b" ", b" ", b"q"], 2.5) for c, r in sizes]
+    jobs += [("saver pixels --mono", ["saver", "--terminal", "pixels", "-d", "1", "--mono"], c, r, [b"q"], 2.5) for c, r in sizes]
     jobs += [(f"scene {how}", ["kraken-rising", "--scenes", how], c, r, [b"d", b"d", b" ", b"d", b"q"], 0.8) for how in ["ascii", "dense", "braille", "crisp", "soft"] for c, r in [(420, 104), (220, 60), (90, 28)]]
     jobs += [("picker --prototypes", ["--prototypes"], c, r, [b"G", b"p", b"j", b"\r", b"q", b"q"], 0.8) for c, r in sizes]
-    jobs += [("saver lore --light", ["saver", "lore", "-d", "1", "--light"], c, r, [b"q"], 2.5) for c, r in sizes]
+    jobs += [("saver lore --light", ["saver", "--terminal", "lore", "-d", "1", "--light"], c, r, [b"q"], 2.5) for c, r in sizes]
     # a frame saved from a pause: a piece in blocks, one in letters, one in box drawing and a scene
     saved = ["doubloon", "calico-jack", "treasure-chest", "burning-ship"]
     out = tempfile.mkdtemp(prefix="ahoy-smoke-")
