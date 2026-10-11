@@ -7,16 +7,21 @@
 import type { Piece } from "./types.ts";
 import * as ahoy from "./pieces/ahoy.ts";
 import * as anchor from "./pieces/anchor.ts";
+import * as anchorRoger from "./pieces/anchor-roger.ts";
+import * as anglerfish from "./pieces/anglerfish.ts";
 import * as articles from "./pieces/articles.ts";
 import * as aws from "./pieces/aws.ts";
+import * as bilgeRat from "./pieces/bilge-rat.ts";
 import * as blackBart from "./pieces/black-bart.ts";
 import * as blackSpot from "./pieces/black-spot.ts";
 import * as blackbeard from "./pieces/blackbeard.ts";
+import * as brassCompass from "./pieces/brass-compass.ts";
 import * as broadside from "./pieces/broadside.ts";
 import * as burningShip from "./pieces/burning-ship.ts";
 import * as calicoJack from "./pieces/calico-jack.ts";
 import * as cannon from "./pieces/cannon.ts";
 import * as compassRose from "./pieces/compass-rose.ts";
+import * as condentPennant from "./pieces/condent-pennant.ts";
 import * as crossedCutlasses from "./pieces/crossed-cutlasses.ts";
 import * as crossedFlintlocks from "./pieces/crossed-flintlocks.ts";
 import * as crownedSkull from "./pieces/crowned-skull.ts";
@@ -29,33 +34,47 @@ import * as deadEye from "./pieces/dead-eye.ts";
 import * as deadMansChest from "./pieces/dead-mans-chest.ts";
 import * as desertIsland from "./pieces/desert-island.ts";
 import * as doubloon from "./pieces/doubloon.ts";
+import * as drownedRoger from "./pieces/drowned-roger.ts";
 import * as edwardLow from "./pieces/edward-low.ts";
 import * as eightBells from "./pieces/eight-bells.ts";
+import * as emanuelWynne from "./pieces/emanuel-wynne.ts";
 import * as fireRoger from "./pieces/fire-roger.ts";
 import * as fishBones from "./pieces/fish-bones.ts";
+import * as flintlock from "./pieces/flintlock.ts";
+import * as flintlockRoger from "./pieces/flintlock-roger.ts";
 import * as flyingDutchman from "./pieces/flying-dutchman.ts";
 import * as galleon from "./pieces/galleon.ts";
 import * as ghostCaptain from "./pieces/ghost-captain.ts";
 import * as ghostRoger from "./pieces/ghost-roger.ts";
 import * as glowingWake from "./pieces/glowing-wake.ts";
+import * as goldHoard from "./pieces/gold-hoard.ts";
+import * as goldRoger from "./pieces/gold-roger.ts";
 import * as goldTooth from "./pieces/gold-tooth.ts";
+import * as grapplingHook from "./pieces/grappling-hook.ts";
 import * as grog from "./pieces/grog.ts";
+import * as henryEvery from "./pieces/henry-every.ts";
 import * as hourglass from "./pieces/hourglass.ts";
+import * as iceRoger from "./pieces/ice-roger.ts";
 import * as ironHook from "./pieces/iron-hook.ts";
 import * as jackRackham from "./pieces/jack-rackham.ts";
 import * as joliRouge from "./pieces/joli-rouge.ts";
 import * as jollyBoat from "./pieces/jolly-boat.ts";
 import * as jollyRoger from "./pieces/jolly-roger.ts";
 import * as kraken from "./pieces/kraken.ts";
+import * as krakenArms from "./pieces/kraken-arms.ts";
 import * as laughingRoger from "./pieces/laughing-roger.ts";
 import * as litFuse from "./pieces/lit-fuse.ts";
+import * as manOfWar from "./pieces/man-of-war.ts";
 import * as mastheadDawn from "./pieces/masthead-dawn.ts";
+import * as mermaid from "./pieces/mermaid.ts";
 import * as messageInABottle from "./pieces/message-in-a-bottle.ts";
 import * as noPreyNoPay from "./pieces/no-prey-no-pay.ts";
 import * as octopus from "./pieces/octopus.ts";
+import * as oysterPearl from "./pieces/oyster-pearl.ts";
 import * as parrot from "./pieces/parrot.ts";
 import * as piecesOfEight from "./pieces/pieces-of-eight.ts";
 import * as piercedSkull from "./pieces/pierced-skull.ts";
+import * as pirateCaptain from "./pieces/pirate-captain.ts";
 import * as pirateCove from "./pieces/pirate-cove.ts";
 import * as pirateCrab from "./pieces/pirate-crab.ts";
 import * as pirateFlag from "./pieces/pirate-flag.ts";
@@ -75,16 +94,21 @@ import * as seagull from "./pieces/seagull.ts";
 import * as sharkFin from "./pieces/shark-fin.ts";
 import * as shipInABottle from "./pieces/ship-in-a-bottle.ts";
 import * as shipsLantern from "./pieces/ships-lantern.ts";
+import * as shipsMonkey from "./pieces/ships-monkey.ts";
 import * as shipsWheel from "./pieces/ships-wheel.ts";
+import * as shovelRoger from "./pieces/shovel-roger.ts";
 import * as skeletonKey from "./pieces/skeleton-key.ts";
 import * as skullAndCrossbones from "./pieces/skull-and-crossbones.ts";
 import * as skullCandle from "./pieces/skull-candle.ts";
 import * as skullIsland from "./pieces/skull-island.ts";
 import * as skullMoon from "./pieces/skull-moon.ts";
 import * as sloop from "./pieces/sloop.ts";
+import * as snakeRoger from "./pieces/snake-roger.ts";
+import * as spiderRoger from "./pieces/spider-roger.ts";
 import * as spyglass from "./pieces/spyglass.ts";
 import * as stedeBonnet from "./pieces/stede-bonnet.ts";
 import * as stormAtSea from "./pieces/storm-at-sea.ts";
+import * as stormRoger from "./pieces/storm-roger.ts";
 import * as sunkenGalleon from "./pieces/sunken-galleon.ts";
 import * as thomasTew from "./pieces/thomas-tew.ts";
 import * as threeSkulls from "./pieces/three-skulls.ts";
@@ -147,6 +171,18 @@ export const OWN_PIECES: [slug: string, pack: string, piece: Piece][] = [
   ["octopus", "pixels", octopus],
   ["pirate-crab", "pixels", pirateCrab],
   ["seagull", "pixels", seagull],
+  ["pirate-captain", "pixels", pirateCaptain],
+  ["man-of-war", "pixels", manOfWar],
+  ["ships-monkey", "pixels", shipsMonkey],
+  ["bilge-rat", "pixels", bilgeRat],
+  ["anglerfish", "pixels", anglerfish],
+  ["mermaid", "pixels", mermaid],
+  ["kraken-arms", "pixels", krakenArms],
+  ["flintlock", "pixels", flintlock],
+  ["gold-hoard", "pixels", goldHoard],
+  ["brass-compass", "pixels", brassCompass],
+  ["grappling-hook", "pixels", grapplingHook],
+  ["oyster-pearl", "pixels", oysterPearl],
   ["skull-and-crossbones", "rogers", skullAndCrossbones],
   ["jack-rackham", "rogers", jackRackham],
   ["cutlass-bite", "rogers", cutlassBite],
@@ -159,6 +195,18 @@ export const OWN_PIECES: [slug: string, pack: string, piece: Piece][] = [
   ["rose-roger", "rogers", roseRoger],
   ["profile-roger", "rogers", profileRoger],
   ["winged-skull", "rogers", wingedSkull],
+  ["emanuel-wynne", "rogers", emanuelWynne],
+  ["henry-every", "rogers", henryEvery],
+  ["condent-pennant", "rogers", condentPennant],
+  ["gold-roger", "rogers", goldRoger],
+  ["flintlock-roger", "rogers", flintlockRoger],
+  ["anchor-roger", "rogers", anchorRoger],
+  ["shovel-roger", "rogers", shovelRoger],
+  ["storm-roger", "rogers", stormRoger],
+  ["ice-roger", "rogers", iceRoger],
+  ["snake-roger", "rogers", snakeRoger],
+  ["spider-roger", "rogers", spiderRoger],
+  ["drowned-roger", "rogers", drownedRoger],
   ["blackbeard", "lore", blackbeard],
   ["calico-jack", "lore", calicoJack],
   ["queen-annes-revenge", "lore", queenAnnesRevenge],
