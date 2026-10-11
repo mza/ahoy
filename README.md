@@ -1,6 +1,6 @@
 # ahoy
 
-Animated ascii art in your terminal: 118 pirate pieces in five packs, the original *pirate pack*, *pirate pixels* (pixel art in a few flat colours), *jolly rogers* (two dozen takes on the skull and crossbones), *pirate lore* (animated logos from the golden age of piracy) and *pirate scenes* (big painted halftone scenes), plus the AWS logo, just for fun. Browse them with a live preview, play one full screen, or leave a screensaver running.
+Animated ascii art in your terminal: 124 pirate pieces in five packs, the original *pirate pack*, *pirate pixels* (pixel art in a few flat colours), *jolly rogers* (two dozen takes on the skull and crossbones), *pirate lore* (animated logos from the golden age of piracy) and *pirate scenes* (big painted halftone scenes), plus the AWS logo, just for fun. Browse them with a live preview, play one full screen, or leave a screensaver running.
 
 The pieces are built on [ascii.rest](https://github.com/bas3line/ascii), and its library of 200+ more pieces is a flag away: `--all`.
 
@@ -85,7 +85,7 @@ There are contact sheets of every piece in [`docs/sheets`](docs/sheets).
 
 **pirate lore** (`lore`): `blackbeard`, `calico-jack`, `queen-annes-revenge`, `black-bart`, `pieces-of-eight`, `no-prey-no-pay`, `tortuga`, `hourglass`, `black-spot`, `flying-dutchman`, `compass-rose`, `wanted-poster`, `eight-bells`, `stede-bonnet`, `ghost-captain`, `cutlass`, `broadside`, `dead-mans-chest`, `grog`, `davy-jones-locker`, `spyglass`, `iron-hook`, `skull-moon`, `edward-low`, `thomas-tew`, `ships-lantern`, `three-skulls`, `articles`, `powder-keg`, `joli-rouge`, `crossed-flintlocks`, `crows-nest`, `message-in-a-bottle`. Animated logos in terminal character art on black, most of them historical pirate flags and the stuff of pirate legend.
 
-**pirate scenes** (`voyages`): `skull-island`, `storm-at-sea`, `port-royal`, `pirate-cove`, `glowing-wake`, `sea-battle`, `burning-ship`, `masthead-dawn`, `sunken-galleon`, `wreck-coast`, `treasure-cave`, `pirate-tavern`. 200×100 halftone scenes in colour, in the style of ascii.rest's own; in a terminal they're shrunk to fit, so they look best in a big window, or full screen in the macOS screensaver.
+**pirate scenes** (`voyages`): `skull-island`, `storm-at-sea`, `port-royal`, `pirate-cove`, `glowing-wake`, `sea-battle`, `burning-ship`, `masthead-dawn`, `sunken-galleon`, `wreck-coast`, `treasure-cave`, `pirate-tavern`, `kraken-rising`, `ghost-ship`, `hidden-lagoon`, `aurora-passage`, `volcano-isle`, `lighthouse-reef`. 200×100 halftone scenes in colour, in the style of ascii.rest's own; in a terminal they're shrunk to fit, so they look best in a big window, or full screen in the macOS screensaver.
 
 **the pirate pack** (`pirate`):
 `galleon`, `pirate-flag`, `jolly-roger`, `kraken`, `parrot`, `ships-wheel`, `treasure-map`, `treasure-chest`, `anchor`, `ahoy` and `pirate-heart`, each in a different style: dense ascii fill, box-drawing line art, old-school slashes, shaded blocks, procedural shading. They live in [`src/pieces`](src/pieces) and follow the [ascii.rest piece contract](https://github.com/bas3line/ascii/blob/main/CONTRIBUTING.md), so any of them could be contributed upstream.

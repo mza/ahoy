@@ -10,6 +10,7 @@ import * as anchor from "./pieces/anchor.ts";
 import * as anchorRoger from "./pieces/anchor-roger.ts";
 import * as anglerfish from "./pieces/anglerfish.ts";
 import * as articles from "./pieces/articles.ts";
+import * as auroraPassage from "./pieces/aurora-passage.ts";
 import * as aws from "./pieces/aws.ts";
 import * as bilgeRat from "./pieces/bilge-rat.ts";
 import * as blackBart from "./pieces/black-bart.ts";
@@ -46,6 +47,7 @@ import * as flyingDutchman from "./pieces/flying-dutchman.ts";
 import * as galleon from "./pieces/galleon.ts";
 import * as ghostCaptain from "./pieces/ghost-captain.ts";
 import * as ghostRoger from "./pieces/ghost-roger.ts";
+import * as ghostShip from "./pieces/ghost-ship.ts";
 import * as glowingWake from "./pieces/glowing-wake.ts";
 import * as goldHoard from "./pieces/gold-hoard.ts";
 import * as goldRoger from "./pieces/gold-roger.ts";
@@ -53,6 +55,7 @@ import * as goldTooth from "./pieces/gold-tooth.ts";
 import * as grapplingHook from "./pieces/grappling-hook.ts";
 import * as grog from "./pieces/grog.ts";
 import * as henryEvery from "./pieces/henry-every.ts";
+import * as hiddenLagoon from "./pieces/hidden-lagoon.ts";
 import * as hourglass from "./pieces/hourglass.ts";
 import * as iceRoger from "./pieces/ice-roger.ts";
 import * as ironHook from "./pieces/iron-hook.ts";
@@ -62,7 +65,9 @@ import * as jollyBoat from "./pieces/jolly-boat.ts";
 import * as jollyRoger from "./pieces/jolly-roger.ts";
 import * as kraken from "./pieces/kraken.ts";
 import * as krakenArms from "./pieces/kraken-arms.ts";
+import * as krakenRising from "./pieces/kraken-rising.ts";
 import * as laughingRoger from "./pieces/laughing-roger.ts";
+import * as lighthouseReef from "./pieces/lighthouse-reef.ts";
 import * as litFuse from "./pieces/lit-fuse.ts";
 import * as manOfWar from "./pieces/man-of-war.ts";
 import * as mastheadDawn from "./pieces/masthead-dawn.ts";
@@ -88,8 +93,8 @@ import * as redRoger from "./pieces/red-roger.ts";
 import * as roseRoger from "./pieces/rose-roger.ts";
 import * as rumBottle from "./pieces/rum-bottle.ts";
 import * as seaBattle from "./pieces/sea-battle.ts";
-import * as seaDog2 from "./pieces/sea-dog-2.ts";
 import * as seaDog from "./pieces/sea-dog.ts";
+import * as seaDog2 from "./pieces/sea-dog-2.ts";
 import * as seaSerpent from "./pieces/sea-serpent.ts";
 import * as seagull from "./pieces/seagull.ts";
 import * as sharkFin from "./pieces/shark-fin.ts";
@@ -118,6 +123,7 @@ import * as treasureCave from "./pieces/treasure-cave.ts";
 import * as treasureChest from "./pieces/treasure-chest.ts";
 import * as treasureMap from "./pieces/treasure-map.ts";
 import * as tricorn from "./pieces/tricorn.ts";
+import * as volcanoIsle from "./pieces/volcano-isle.ts";
 import * as walkThePlank from "./pieces/walk-the-plank.ts";
 import * as wantedPoster from "./pieces/wanted-poster.ts";
 import * as whaleTail from "./pieces/whale-tail.ts";
@@ -254,5 +260,11 @@ export const OWN_PIECES: [slug: string, pack: string, piece: Piece][] = [
   ["wreck-coast", "voyages", wreckCoast],
   ["treasure-cave", "voyages", treasureCave],
   ["pirate-tavern", "voyages", pirateTavern],
+  ["kraken-rising", "voyages", krakenRising],
+  ["ghost-ship", "voyages", ghostShip],
+  ["hidden-lagoon", "voyages", hiddenLagoon],
+  ["aurora-passage", "voyages", auroraPassage],
+  ["volcano-isle", "voyages", volcanoIsle],
+  ["lighthouse-reef", "voyages", lighthouseReef],
   ["aws", "aws", aws],
 ];
