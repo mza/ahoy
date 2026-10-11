@@ -3,9 +3,10 @@
  * eyes and eight arms curling out below it. The arms wave in a four-pose
  * cycle, and now and then it blinks.
  *
- * Pixel art in block elements, two square pixels a cell, in two flat colours:
- * one for the body, bone for the eyes and suckers. Black gaps keep the arms
- * apart, so it reads in one ink too.
+ * Pixel art in block elements, two square pixels a cell, each pixel drawn on
+ * its own, in two flat colours: one for the body, bone for the eyes, the
+ * rows of suckers and a shine on the head. Black gaps keep the arms apart, so
+ * it reads in one ink too.
  */
 import type { Frame, Meta } from "../types.ts";
 
@@ -64,42 +65,58 @@ const mod = (a: number, n: number) => ((a % n) + n) % n;
 
 // ---- the octopus
 
-const CX = 40, NECK = 34;
-const KEYS = { b: BONE };
-// two pixels to each of these
+const CX = 40, NECK = 33;
+const KEYS = { b: BONE, c: BODY };
+// An eye: a round bone ball with the slot of a pupil across it, a glint in the slot.
 const EYE = [
-  ".bbb.",
-  "bbbbb",
-  "bb__b",
-  "bb__b",
-  "bbbbb",
-  ".bbb.",
+  "...bbbbb...",
+  ".bbbbbbbbb.",
+  "bbbbbbbbbbb",
+  "bbbbbbbbbbb",
+  "bb_______bb",
+  "bb__b____bb",
+  "bb_______bb",
+  "bbbbbbbbbbb",
+  "bbbbbbbbbbb",
+  ".bbbbbbbbb.",
+  "...bbbbb...",
 ];
+// Shut: only the lower lid's line.
 const SHUT = [
-  ".....",
-  ".....",
-  ".....",
-  "bbbbb",
-  ".....",
-  ".....",
+  "...ccccc...",
+  ".ccccccccc.",
+  "ccccccccccc",
+  "ccccccccccc",
+  "ccccccccccc",
+  "ccccccccccc",
+  "bcccccccccb",
+  "cbbcccccbbc",
+  "cccbbbbbccc",
+  ".ccccccccc.",
+  "...ccccc...",
 ];
 // Each arm on the right, from the middle out: where it leaves the head, how far it hangs, how far it
 // spreads, and whether its tip curls. The left mirrors them.
 const ARMS = [
-  [4, 25, 2, 0],
-  [10, 23, 7, 0],
-  [16, 17, 10, 1],
-  [22, 8, 9, 1],
+  [4, 26, 2, 0],
+  [10, 24, 7, 0],
+  [16, 18, 10, 1],
+  [22, 9, 9, 1],
 ];
 const POSES = 4, STEP = 0.3, LOOP = 6;
 
 export default function octopus(): Frame {
-  // what never moves: the head, a dome flaring into a skirt the arms hang from
+  // what never moves: the head, a dome flaring into a skirt the arms hang from, a shine on its brow
   const head = new Uint8Array(W * H);
-  disc(head, CX, 20, 22, 18, BODY);
-  rect(head, CX - 20, 24, 40, NECK - 26, BODY);
-  rect(head, CX - 24, NECK - 4, 48, 4, BODY);
-  rect(head, CX - 22, NECK - 6, 44, 2, BODY);
+  disc(head, CX, 19, 21.5, 17.5, BODY);
+  for (let y = 24; y < NECK; y++) {
+    const half = Math.round(20 + 4.5 * Math.max(0, (y - 27) / (NECK - 27)) ** 2);
+    rect(head, CX - half, y, 2 * half + 1, 1, BODY);
+  }
+  for (const [x, y, w] of [[-13, 7, 3], [-15, 9, 2], [-16, 11, 1], [-16, 12, 1]]) rect(head, CX + x, y, w, 1, BONE);
+  // a small smile
+  rect(head, CX - 2, 29, 5, 1, 0);
+  for (const s of [-1, 1]) set(head, CX + s * 3, 28, 0);
 
   // the arms in each pose: one wave runs down all of them together, so they never cross
   const poses = Array.from({ length: POSES }, (_, n) => {
@@ -109,18 +126,20 @@ export default function octopus(): Frame {
       ARMS.forEach(([x0, hang, spread, curl]) => {
         const sway = (3 * hang) / 25;
         const at = (v: number) => CX + s * (x0 + spread * v * v) + sway * v * Math.sin(v * 4 - phase);
-        for (let j = 0; j <= hang * 3; j++) {
-          const v = j / (hang * 3), w = v > 0.7 ? 3 : 4;
-          rect(p, Math.round(at(v) - w / 2), NECK + Math.round(hang * v), w, w, BODY);
+        // the arm as a string of round beads, thinning towards the tip
+        const pts: [number, number, number][] = [];
+        for (let j = 0; j <= hang * 4; j++) {
+          const v = j / (hang * 4);
+          pts.push([at(v), NECK - 1 + hang * v, 2.4 - 1 * v]);
         }
-        // the tip, curling up and out
-        const xe = at(1), ye = NECK + hang + 1;
-        if (curl) for (let i = 0; i <= 14; i++) {
-          const th = (i / 14) * 3.6;
-          rect(p, Math.round(xe + s * 3.5 * (1 - Math.cos(th)) - 1.5), Math.round(ye + 3.5 * Math.sin(th) - 1), 3, 3, BODY);
+        const xe = at(1), ye = NECK - 1 + hang;
+        if (curl) for (let i = 1; i <= 24; i++) {
+          const th = (i / 24) * 4.2, r = 3.4 - 0.35 * th;
+          pts.push([xe + s * (3.4 - r * Math.cos(th)), ye + r * Math.sin(th), 1.4 - 0.12 * th]);
         }
-        // suckers down it, on even rows so they keep their colour
-        for (let y = 4; y < hang - 3; y += 6) rect(p, Math.round(at(y / hang)) - 1, NECK + y, 2, 2, BONE);
+        for (const [x, y, r] of pts) disc(p, x, y, r, r, BODY);
+        // a row of suckers down it, one pixel each
+        for (let j = 14; j < pts.length - 8; j += 20) set(p, pts[j][0], pts[j][1], BONE);
       });
     return p;
   });
@@ -131,8 +150,8 @@ export default function octopus(): Frame {
     p.set(poses[Math.floor(u / STEP) % POSES]);
     for (let i = 0; i < p.length; i++) if (head[i]) p[i] = head[i];
     const eye = u >= 3.3 && u < 3.5 ? SHUT : EYE;
-    sprite(p, CX - 14, 16, eye, KEYS, 2);
-    sprite(p, CX + 4, 16, eye, KEYS, 2);
+    sprite(p, CX - 15, 14, eye, KEYS);
+    sprite(p, CX + 5, 14, eye.map((r) => [...r].reverse().join("")), KEYS);
     return emit(p, color);
   };
 }

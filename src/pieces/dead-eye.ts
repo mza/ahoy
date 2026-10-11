@@ -4,9 +4,10 @@
  * which winks now and then; the jaw drops and clacks shut, twice, and the
  * tails of the knot flap.
  *
- * Pixel art in block elements, two square pixels a cell, in four flat colours.
- * It is drawn by hand as rows of big pixels, two to each of its own, with
- * black gaps under the bandana and around the patch so it reads in one ink.
+ * Pixel art in block elements, two square pixels a cell, each pixel drawn on
+ * its own, in five flat colours. The bone is shaded down its right-hand
+ * edges; black lines under the bandana and around the patch and its strap
+ * keep it readable in one ink.
  */
 import type { Frame, Meta } from "../types.ts";
 
@@ -18,15 +19,15 @@ export const meta = {
   rows: 32,
   fps: 20,
   ground: "#000000",
-  // bone, the patch's iron grey, the ember's gold, bandana red
-  palette: ["#e8e2d0", "#59616f", "#f2b632", "#e23a2e"],
+  // bone and its shade, the patch's iron grey, the ember's gold, bandana red
+  palette: ["#e8e2d0", "#b3ad9c", "#59616f", "#f2b632", "#e23a2e"],
 } satisfies Meta;
 
 // ---- the pixel kit: a canvas of square pixels, one a cell wide and half a cell tall
 
 const W = meta.cols, H = meta.rows * 2;
 // A pixel is 0 for empty, else a palette index plus one.
-const BONE = 1, PATCH = 2, GOLD = 3, RED = 4;
+const BONE = 1, SHADE = 2, PATCH = 3, GOLD = 4, RED = 5;
 
 const set = (p: Uint8Array, x: number, y: number, k: number) => {
   x = Math.round(x), y = Math.round(y);
@@ -65,69 +66,98 @@ const emit = (p: Uint8Array, color?: Uint8Array) => {
   }
   return out.join("\n");
 };
-// ---- the skull, in big pixels: b bone, r bandana, s patch and strap
+// Lay one canvas over another, with a black gap cut around everything on it.
+const over = (p: Uint8Array, q: Uint8Array, gap = 1) => {
+  for (let y = 0; y < H; y++)
+    for (let x = 0; x < W; x++) if (q[y * W + x]) rect(p, x - gap, y - gap, 2 * gap + 1, 2 * gap + 1, 0);
+  for (let i = 0; i < q.length; i++) if (q[i]) p[i] = q[i];
+};
 
-const KEYS = { b: BONE, r: RED, s: PATCH, g: GOLD };
-const HEAD = [
-  ".......rrrrrrrrrr.......",
-  "....rrrrrrrrrrrrrrrr....",
-  "..rrrrrrrrrrrrrrrrrrrr..",
-  ".rrrrrrrrrrrrrrrrrrrrrr.",
-  "rrrrrrrrrrrrrrrrrrrrrrrrrr",
-  "rrrrrrrrrrrrrrrrrrrrrrrrrrr",
-  "........................rrr",
-  "bbbbbbbbbbbsbbbbbbbbbbbb",
-  "bbbbbbbbbbbbsbbbbbbbbbbb",
-  "bbbbbbbbbbbbb_________bb",
-  "bbb______bbbb_sssssss_ss",
-  "bb________bbb_sssssss_bb",
-  "bb________bbb_sssssss_bb",
-  "bb________bbb_sssssss_bb",
-  "bbb______bbbb__sssss__bb",
-  "bbbbbbbbbbbbbb__sss__bbb",
-  "bbbbbbbbbbb__bb_____bbbb",
-  ".bbbbbbbbb____bbbbbbbbb.",
-  "..bbbbbbbb____bbbbbbbb..",
-  "...bbbbbbbbbbbbbbbbbb...",
-  "...bbbbbbbbbbbbbbbbbb...",
-  "...b_bb_bb_bb_bb_bb_b...",
-  "...b_bb_bb_bb_bb_bb_b...",
-];
-const JAW = [
-  "...b_bb_bb_bb_bb_bb_b...",
-  "...b_bb_bb_bb_bb_bb_b...",
-  "...bbbbbbbbbbbbbbbbbb...",
-  "....bbbbbbbbbbbbbbbb....",
-  ".......bbbbbbbbbb.......",
-];
-// The knot's two tails, hanging and lifted.
-const TAILS = [
-  ["rr...", "rrr..", ".rrr.", ".rr.r", "rr..r", "rr..rr", "r....r"],
-  ["rr...", "rrrr.", ".rrrr", ".rr.rr", ".rr..r", "..rr.", "...r."],
-];
-// The open socket: the ember small and large, and the lid shut in a wink.
-const EMBER = [
-  ["....", ".gg.", ".gg.", "...."],
-  [".gg.", "gggg", "gggg", ".gg."],
-];
-const WINK = ["bbbbbbbb", "bbbbbbbb", "________", "bbbbbbbb", "bbbbbbbb"];
-const X0 = 14, Y0 = 2, LOOP = 6;
+// ---- the skull
+
+const CX = 36, CY = 23; // the middle of the cranium
+const EX = CX - 9, EY = CY + 8; // the middle of the open socket
+const NOSE = ["..#..", ".###.", "#####", "##.##", "##.##"];
+const LOOP = 6;
+
+// Bone's right-hand edges in its shade, as if lit from the left.
+const shade = (p: Uint8Array) => {
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (p[y * W + x] === BONE && (x === W - 1 || !p[y * W + x + 1])) p[y * W + x] = SHADE;
+};
+// The bandana's lower edge at a column: it dips towards the ears.
+const brim = (x: number) => CY - 7 + Math.round(3 * ((x - CX) / 23) ** 2);
+// A tooth-wide comb of gaps across a row of teeth.
+const gaps = (p: Uint8Array, y: number, h: number) => {
+  for (let x = CX - 8; x <= CX + 8; x += 4) rect(p, x, y, 1, h, 0);
+};
+// A strip of cloth from one point to another, widening, its end cut in a swallowtail.
+const tail = (p: Uint8Array, x0: number, y0: number, x1: number, y1: number, bend: number) => {
+  for (let i = 0; i <= 40; i++) {
+    const s = i / 40, x = x0 + (x1 - x0) * s + bend * Math.sin(Math.PI * s), y = y0 + (y1 - y0) * s, r = 1.1 + 1.6 * s;
+    disc(p, x, y, r, r, RED);
+    if (i > 34) disc(p, x, y + 0.5, (i - 34) * 0.28, (i - 34) * 0.4, 0);
+  }
+};
 
 export default function deadEye(): Frame {
   // what never moves: the head down to its top teeth
   const still = new Uint8Array(W * H);
-  sprite(still, X0, Y0, HEAD, KEYS, 2);
+  disc(still, CX, CY, 22.5, 20.5, BONE);
+  for (const s of [-1, 1]) disc(still, CX + s * 14.5, CY + 13, 4.5, 4.5, BONE);
+  rect(still, CX - 11, CY + 12, 23, 15, BONE);
+  // the open socket under its brow, the nose, the teeth, a crack
+  for (let y = EY - 6; y <= EY + 6; y++)
+    for (let x = EX - 7; x <= EX + 7; x++) if (((x - EX) / 6.6) ** 2 + ((y - EY) / 5.6) ** 2 < 1 && y >= EY - 5.5 + 0.3 * (x - EX + 6)) set(still, x, y, 0);
+  NOSE.forEach((row, j) => [...row].forEach((c, i) => c === "#" && set(still, CX - 2 + i, CY + 13 + j, 0)));
+  gaps(still, CY + 22, 5);
+  for (const [x, y] of [[17, 22], [18, 23], [18, 24], [19, 25], [20, 25], [20, 26], [19, 27]]) set(still, x, y, 0);
+  shade(still);
+  // the patch and its strap, in a black line of their own
+  const patch = new Uint8Array(W * H);
+  line(patch, CX + 3, CY + 3, CX - 3, CY - 6, PATCH, 2);
+  line(patch, CX + 14, CY + 3, CX + 23, CY - 1, PATCH, 2);
+  for (let i = 0; i < patch.length; i++) if (!still[i]) patch[i] = 0;
+  for (let y = 0; y <= 13; y++) {
+    const half = y === 0 ? 6 : y <= 7 ? 7 : Math.round(7 - (y - 7) * 1.15);
+    rect(patch, CX + 9 - half, CY + 2 + y, 2 * half + 1, 1, PATCH);
+  }
+  over(still, patch);
+  // the bandana, drawn a pixel proud of the skull, a black line under it, creases running in to its knot
+  for (let y = 0; y < CY; y++)
+    for (let x = 0; x < W; x++) {
+      if (((x - CX) / 23.5) ** 2 + ((y - CY) / 21.5) ** 2 >= 1) continue;
+      if (y <= brim(x)) still[y * W + x] = RED;
+      else if (y === brim(x) + 1) still[y * W + x] = 0;
+    }
+  line(still, 57, 15, 46, 12, 0);
+  line(still, 57, 13, 49, 8, 0);
+  disc(still, 59.5, 16, 2.6, 2.6, RED);
+  // the jaw, apart from the head
+  const jaw = new Uint8Array(W * H);
+  rect(jaw, CX - 11, 0, 23, 4, BONE);
+  [11, 11, 10, 10, 9, 7].forEach((half, j) => rect(jaw, CX - half, 4 + j, 2 * half + 1, 1, BONE));
+  gaps(jaw, 0, 4);
+  shade(jaw);
 
   return (t, { color } = {}) => {
     const u = ((t % LOOP) + LOOP) % LOOP;
     const p = new Uint8Array(still);
-    const beat = Math.floor(u / 0.75);
-    sprite(p, X0 + 52, Y0 + 14, TAILS[beat % 2], KEYS, 2);
-    if (u >= 2 && u < 2.35) sprite(p, X0 + 4, Y0 + 20, WINK, KEYS, 2);
-    else sprite(p, X0 + 8, Y0 + 22, EMBER[beat % 2], KEYS, 2);
+    const beat = Math.floor(u / 0.75) % 2;
+    // the knot's two tails, hanging or lifted on the wind
+    tail(p, 61, 18, 63 + 2 * beat, 35 - 2 * beat, 2 - beat);
+    tail(p, 62, 16, 71 + beat, 27 - 3 * beat, -1.5);
+    if (u >= 2 && u < 2.35) {
+      // a wink: the lid shut over the socket
+      rect(p, EX - 7, EY - 6, 15, 13, BONE);
+      for (let x = -5; x <= 5; x++) set(p, EX + x, EY + 2 - Math.round((x / 5) ** 2 * 2), 0);
+    } else {
+      // the ember, low or flaring
+      if (beat) disc(p, EX, EY + 0.5, 3.4, 3.4, RED);
+      disc(p, EX, EY + 0.5, beat ? 2.2 : 1.6, beat ? 2.2 : 1.6, GOLD);
+    }
     // the jaw: shut, but for two quick clacks
-    const k = u - 4, open = (k >= 0 && k < 0.25) || (k > 0.45 && k < 0.7);
-    sprite(p, X0, Y0 + 48 + (open ? 4 : 0), JAW, KEYS, 2);
+    const k = u - 4, drop = (k >= 0 && k < 0.25) || (k >= 0.45 && k < 0.7) ? 3 : 0;
+    for (let i = 0; i < 10 * W; i++) if (jaw[i]) p[i + (CY + 28 + drop) * W] = jaw[i];
     return emit(p, color);
   };
 }

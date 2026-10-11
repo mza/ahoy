@@ -1,11 +1,12 @@
 /*
  * gold-tooth: a big round skull, front on, with slanted sockets and a wide
- * grin of square teeth, one of them gold. It bobs as it chuckles, and every so
- * often the gold tooth flashes and a little star sparkles on it.
+ * curved grin of rounded teeth, one of them gold. It bobs as it chuckles, and
+ * every so often a little star sparkles on the gold tooth.
  *
- * Pixel art in block elements, two square pixels a cell, in two flat colours.
- * The skull is a disc and a jaw with the sockets, the nose and the gaps
- * between the teeth cut out of it, so it reads the same in one ink.
+ * Pixel art in block elements, two square pixels a cell, each pixel drawn on
+ * its own, in four flat colours. The skull is a disc and a jaw with the
+ * sockets, the nose and the mouth cut out of it and the teeth set back in,
+ * the bone shaded down its right-hand edges. It reads the same in one ink.
  */
 import type { Frame, Meta } from "../types.ts";
 
@@ -17,15 +18,15 @@ export const meta = {
   rows: 32,
   fps: 20,
   ground: "#000000",
-  // bone and gold
-  palette: ["#e8e2d0", "#f2b632"],
+  // bone and its shade, gold and its shade
+  palette: ["#e8e2d0", "#b3ad9c", "#f2b632", "#b9821c"],
 } satisfies Meta;
 
 // ---- the pixel kit: a canvas of square pixels, one a cell wide and half a cell tall
 
 const W = meta.cols, H = meta.rows * 2;
 // A pixel is 0 for empty, else a palette index plus one.
-const BONE = 1, GOLD = 2;
+const BONE = 1, SHADE = 2, GOLD = 3, DEEP = 4;
 
 const set = (p: Uint8Array, x: number, y: number, k: number) => {
   x = Math.round(x), y = Math.round(y);
@@ -65,7 +66,7 @@ const emit = (p: Uint8Array, color?: Uint8Array) => {
   return out.join("\n");
 };
 // Lay one canvas over another, with a black gap cut around everything on it.
-const over = (p: Uint8Array, q: Uint8Array, gap = 2) => {
+const over = (p: Uint8Array, q: Uint8Array, gap = 1) => {
   for (let y = 0; y < H; y++)
     for (let x = 0; x < W; x++) if (q[y * W + x]) rect(p, x - gap, y - gap, 2 * gap + 1, 2 * gap + 1, 0);
   for (let i = 0; i < q.length; i++) if (q[i]) p[i] = q[i];
@@ -73,54 +74,73 @@ const over = (p: Uint8Array, q: Uint8Array, gap = 2) => {
 
 // ---- the skull
 
-const CX = 39.5;
-const NOSE = [".._..", ".___.", "__.__"];
-// The grin: five teeth a row, each row of them lifted towards the corners of the mouth.
-const LIFT = [-2, 0, 0, 0, -2];
-const TOOTH = 3;
-// The sparkle, small to large: b gold, w bone.
+const CX = 40;
+const NOSE = ["...#...", "..###..", ".#####.", ".##.##.", "###.###", "##...##"];
+// The line the teeth meet on at a column: a smile, turned up towards its corners.
+const bite = (x: number) => Math.round(49 - 5 * ((x - CX) / 22) ** 2);
+const TOOTH = 4; // which of the seven top teeth is gold
+// The sparkle, small to large: g gold, w bone.
 const STAR = [
-  ["..b..", ".bwb.", "bbwbb", ".bwb.", "..b.."],
-  ["....b....", "....b....", "....b....", "...bwb...", "bbbwwwbbb", "...bwb...", "....b....", "....b....", "....b...."],
-  ["......b......", "......b......", "......b......", "......b......", ".....bwb.....", "....bwwwb....", "bbbbbwwwbbbbb", "....bwwwb....", ".....bwb.....", "......b......", "......b......", "......b......", "......b......"],
+  [".g.", "gwg", ".g."],
+  ["...g...", "...g...", "..gwg..", "ggwwwgg", "..gwg..", "...g...", "...g..."],
+  [".....g.....", ".....g.....", ".....g.....", ".....g.....", "....gwg....", "ggggwwwgggg", "....gwg....", ".....g.....", ".....g.....", ".....g.....", ".....g....."],
 ];
 const LOOP = 4;
+
+// Bone's right-hand edges in its shade, as if lit from the left.
+const shade = (p: Uint8Array) => {
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (p[y * W + x] === BONE && (x === W - 1 || !p[y * W + x + 1])) p[y * W + x] = SHADE;
+};
 
 export default function goldTooth(): Frame {
   // what never moves within the skull: bone, with the face cut out of it
   const skull = new Uint8Array(W * H);
   disc(skull, CX, 26, 31, 23, BONE);
-  for (let y = 38; y < 63; y++) {
-    const half = y < 51 ? 26 : Math.round(26 - (y - 51) * 1.2);
-    rect(skull, Math.ceil(CX - half), y, 2 * half, 1, BONE);
+  for (let y = 36; y < 63; y++) {
+    const half = y < 42 ? 26 : y < 52 ? 26 - (y - 42) * 0.3 : 23 - 11 * ((y - 52) / 10) ** 1.7;
+    rect(skull, CX - Math.round(half), y, 2 * Math.round(half) + 1, 1, BONE);
   }
+  // the sockets, each under a brow that slants down towards the nose
   for (const s of [-1, 1])
     for (let y = 12; y < 36; y++)
       for (let x = 0; x < W; x++) {
         const dx = (x - CX) * s;
         if (dx > 0 && ((dx - 13.5) / 9) ** 2 + ((y - 24) / 9) ** 2 < 1 && y > 24 - 0.45 * dx) skull[y * W + x] = 0;
       }
-  sprite(skull, 35, 30, NOSE, {}, 2);
-  // the grin: a black mouth turned up at its ends, and two rows of teeth in it
-  LIFT.forEach((l, i) => rect(skull, 19 + 8 * i, 40 + l, 10, 16, 0));
-  LIFT.forEach((l, i) => {
-    rect(skull, 21 + 8 * i, 42 + l, 6, 6, i === TOOTH ? GOLD : BONE);
-    rect(skull, 21 + 8 * i, 50 + l, 6, 4, BONE);
-  });
-  const tx = 21 + 8 * TOOTH, ty = 42 + LIFT[TOOTH];
+  NOSE.forEach((row, j) => [...row].forEach((c, i) => c === "#" && set(skull, CX - 3 + i, 30 + j, 0)));
+  // a crack in the crown, and a hollow under each cheekbone
+  for (const [x, y] of [[49, 3], [49, 4], [48, 5], [49, 6], [50, 7], [49, 8], [48, 9], [48, 10], [47, 11]]) set(skull, x, y, 0);
+  for (const s of [-1, 1]) for (let i = 0; i < 4; i++) set(skull, CX + s * (25 - i), 40 + i, 0);
+  // the mouth, creased at its corners, and two rows of round-cornered teeth in it
+  for (let x = CX - 22; x <= CX + 22; x++) {
+    const edge = Math.abs(x - CX) === 22 ? 1 : 0;
+    rect(skull, x, bite(x) - 8 + edge, 1, 15 - 2 * edge, 0);
+  }
+  for (const s of [-1, 1]) for (let i = 1; i <= 3; i++) set(skull, CX + s * (22 + i), bite(CX + 22) - i, 0);
+  shade(skull);
+  for (let i = 0; i < 7; i++)
+    for (let j = 0; j < 5; j++) {
+      const x = CX - 20 + 6 * i + j, b = bite(x), corner = j === 0 || j === 4 ? 1 : 0, small = i === 0 || i === 6 ? 1 : 0;
+      const ink = i !== TOOTH ? (j === 4 ? SHADE : BONE) : j === 4 ? DEEP : GOLD;
+      rect(skull, x, b - 7 + corner + small, 1, 7 - 2 * corner - small, ink);
+      rect(skull, x, b + 1 + corner, 1, 5 - 2 * corner - small, j === 4 ? SHADE : BONE);
+    }
+  const tx = CX - 20 + 6 * TOOTH, ty = bite(tx + 2) - 7;
+  set(skull, tx + 1, ty + 1, BONE);
+  set(skull, tx + 1, ty + 2, BONE);
 
   return (t, { color } = {}) => {
     const u = ((t % LOOP) + LOOP) % LOOP;
     // the chuckle: three quick bobs
-    const up = u < 1.2 && Math.floor(u / 0.2) % 2 === 1 ? 2 : 0;
+    const up = u < 1.2 && Math.floor(u / 0.2) % 2 === 1 ? 1 : 0;
     const p = new Uint8Array(W * H);
     p.set(skull.subarray(up * W));
     // the sparkle on the tooth
-    const k = Math.floor((u - 2) / 0.15);
-    if (k >= 0 && k < 6) {
-      const star = new Uint8Array(W * H), s = STAR[[0, 1, 2, 2, 1, 0][k]], n = (s.length - 1) / 2;
-      sprite(star, tx + 5 - n, ty - n - up, s, { b: GOLD, w: BONE });
-      over(p, star, 1);
+    const k = Math.floor((u - 2) / 0.12);
+    if (k >= 0 && k < 7) {
+      const star = new Uint8Array(W * H), s = STAR[[0, 1, 2, 2, 2, 1, 0][k]], n = (s.length - 1) / 2;
+      sprite(star, tx + 4 - n, ty + 1 - n - up, s, { g: GOLD, w: BONE });
+      over(p, star);
     }
     return emit(p, color);
   };

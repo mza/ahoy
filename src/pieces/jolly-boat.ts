@@ -2,31 +2,33 @@
  * jolly-boat: a ship's rowing boat seen side-on, one pirate at the oars with
  * his back to the bow. He rows in four poses: reach, pull, finish, and the oar
  * swung back clear of the water. The boat nudges forward on every pull and the
- * waves scroll under it.
+ * swell slides under it.
  *
- * Pixel art in block elements, two square pixels a cell, in four flat colours.
- * The pirate is a sprite two pixels to each of its own; the oar is cut out of
- * the hull with a black gap, so it reads in one ink too.
+ * Pixel art in block elements, two square pixels a cell, each pixel drawn on
+ * its own, in five flat colours: a clinker hull with its strakes and thole
+ * pins, the pirate in profile under a tricorn, bearded, in a striped shirt,
+ * his arm bent to the oar. The oar is cut out of the hull with a black line,
+ * so it reads in one ink too.
  */
 import type { Frame, Meta } from "../types.ts";
 
 export const meta = {
   name: "jolly boat",
   category: "scenes",
-  note: "a pirate rowing a jolly boat over scrolling waves, stroke by stroke",
+  note: "a pirate rowing a jolly boat over the swell, stroke by stroke",
   cols: 80,
   rows: 32,
   fps: 20,
   ground: "#000000",
-  // sea blue, wood, blood red, bone
-  palette: ["#3a7ca5", "#a8703a", "#e23a2e", "#e8e2d0"],
+  // sea blue, wood, blood red, bone's shade, bone
+  palette: ["#3a7ca5", "#a8703a", "#e23a2e", "#b9b2a0", "#e8e2d0"],
 } satisfies Meta;
 
 // ---- the pixel kit: a canvas of square pixels, one a cell wide and half a cell tall
 
 const W = meta.cols, H = meta.rows * 2;
 // A pixel is 0 for empty, else a palette index plus one.
-const SEA = 1, WOOD = 2, RED = 3, BONE = 4;
+const SEA = 1, WOOD = 2, RED = 3, SHADE = 4, BONE = 5;
 
 const set = (p: Uint8Array, x: number, y: number, k: number) => {
   x = Math.round(x), y = Math.round(y);
@@ -47,18 +49,6 @@ const sprite = (p: Uint8Array, x: number, y: number, rows: string[], keys: Recor
     }),
   );
 };
-// A filled polygon, by scanline.
-const poly = (p: Uint8Array, pts: number[][], k: number) => {
-  for (let y = 0; y < H; y++) {
-    const xs: number[] = [];
-    for (let i = 0; i < pts.length; i++) {
-      const [x0, y0] = pts[i], [x1, y1] = pts[(i + 1) % pts.length];
-      if ((y0 <= y && y1 > y) || (y1 <= y && y0 > y)) xs.push(x0 + ((y - y0) * (x1 - x0)) / (y1 - y0));
-    }
-    xs.sort((a, b) => a - b);
-    for (let i = 0; i + 1 < xs.length; i += 2) for (let x = Math.round(xs[i]); x <= Math.round(xs[i + 1]); x++) set(p, x, y, k);
-  }
-};
 // The canvas as half blocks. A cell has one ink: where its two pixels differ, the one further down the palette.
 const emit = (p: Uint8Array, color?: Uint8Array) => {
   const out: string[] = [];
@@ -76,39 +66,48 @@ const emit = (p: Uint8Array, color?: Uint8Array) => {
 
 // ---- the boat, the pirate and the oar
 
-// The pirate from his hat to his belt, facing the stern: a red tricorn, a striped shirt.
-const PIRATE = [
-  "...rrrr...",
-  "r.rrrrrr.r",
-  "rrrrrrrrrr",
-  "..bbbbbb..",
-  "..b_bb_b..",
-  "..bbbbbb..",
-  "...bbbb...",
-  "..........",
-  ".rrrrrrrr.",
-  ".bbbbbbbb.",
-  ".rrrrrrrr.",
-  ".bbbbbbbb.",
-  ".rrrrrrrr.",
+// His head, facing the stern: a tricorn with a bone badge, an eye, a nose, a beard, a neck.
+const HEAD = [
+  "......rrrrr...",
+  "....rrrrrrrr..",
+  "...rrrrbbrrrr.",
+  "r..rrrrbbrrrr.",
+  "rrrrrrrrrrrrrr",
+  ".rrrrrrrrrrrr.",
+  "...bbbbbbbb...",
+  "..bbb_bbbbb...",
+  ".bbbbbbbbbb...",
+  "..bbbbbbbbs...",
+  "..wwwwbbbbs...",
+  "..wwwwwwbs....",
+  "...wwwww......",
+  ".....wbbs.....",
 ];
-const SEAT = 44, GUNWALE = 37, LOCK = 34;
+// The top of the hull at each column, and its bottom: a sheer rising to both ends, a blunt stern, a pointed bow.
+const sheer = (x: number) => 40 - Math.round(4 * ((x - 40) / 35) ** 2);
+const keel = (x: number) => 58 - Math.round(x < 40 ? 11 * ((40 - x) / 35) ** 8 : 17 * ((x - 40) / 35) ** 3.5);
+const SEAT = 42, LOCK = 33;
 // The four poses: how far the pirate leans, where the oar's blade is from the rowlock, and how far the boat has run.
 const POSES = [
-  { lean: -2, bx: 15, by: 20, run: 0 },
-  { lean: 0, bx: 0, by: 24, run: 2 },
-  { lean: 2, bx: -15, by: 20, run: 3 },
-  { lean: 0, bx: -3, by: 10, run: 1 },
+  { lean: -2, bx: 15, by: 19, run: 0 },
+  { lean: 0, bx: 1, by: 23, run: 2 },
+  { lean: 2, bx: -14, by: 19, run: 3 },
+  { lean: 0, bx: -4, by: 9, run: 1 },
 ];
-const WAVE = ["..####..", "########", "##....##"];
+// A swell, sixteen pixels long: how far below its crest the water is at each pixel.
+const SWELL = Array.from({ length: 16 }, (_, i) => Math.round(1 - Math.cos((i / 16) * 2 * Math.PI)));
 const SEA_TOP = 53;
 const LOOP = 8;
 
 export default function jollyBoat(): Frame {
-  // what never changes shape: the hull, a plank of gunwale over a rounded body
+  // what never changes shape: the hull, its capping and strakes, the thole pins the oar sits between
   const boat = new Uint8Array(W * H);
-  poly(boat, [[4, GUNWALE - 3], [9, GUNWALE], [69, GUNWALE], [76, GUNWALE - 3], [76, GUNWALE + 2], [4, GUNWALE + 2]], WOOD);
-  poly(boat, [[8, GUNWALE + 4], [72, GUNWALE + 4], [64, 56], [15, 56]], WOOD);
+  const hull = (x: number, y: number) => x >= 5 && x <= 75 && y >= sheer(x) && y <= keel(x);
+  for (let y = 30; y < H; y++) for (let x = 0; x < W; x++) if (hull(x, y)) set(boat, x, y, WOOD);
+  for (let x = 6; x < 75; x++) for (const d of [2, 6, 10]) if (hull(x, sheer(x) + d + 1)) set(boat, x, sheer(x) + d, 0);
+  for (const x of [LOCK - 2, LOCK + 2]) rect(boat, x, sheer(x) - 2, 1, 2, WOOD);
+  // a ring in the stem for the painter
+  rect(boat, 70, 40, 2, 2, 0);
 
   return (t, { color } = {}) => {
     const u = ((t % LOOP) + LOOP) % LOOP;
@@ -116,25 +115,37 @@ export default function jollyBoat(): Frame {
     const p = new Uint8Array(W * H);
     const dx = pose.run - 1;
     for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (boat[y * W + x]) set(p, x + dx, y, boat[y * W + x]);
-    // the pirate, sat amidships and leaning into his stroke
-    const px = SEAT + dx + pose.lean;
-    sprite(p, px, GUNWALE - 3 - PIRATE.length * 2, PIRATE, { r: RED, b: BONE }, 2);
-    // the oar: from his hands, through the rowlock, down to the blade
-    const lx = LOCK + dx, ly = GUNWALE - 2;
-    const hx = lx - pose.bx * 0.45, hy = ly - 7;
+    // the pirate, sat amidships: a striped shirt, leant into his stroke from the hips, his head on top
+    const px = SEAT + dx;
+    for (let j = 0; j < 14; j++) {
+      const s = Math.round((pose.lean * (13 - j)) / 9);
+      rect(p, px + s + (j < 2 ? 2 : j < 4 ? 1 : 0), 26 + j, j < 2 ? 8 : j < 4 ? 10 : 11, 1, (j >> 1) % 2 ? BONE : RED);
+      if ((j >> 1) % 2) set(p, px + s + 10, 26 + j, SHADE);
+    }
+    sprite(p, px - 1 + Math.round(pose.lean * 1.6), 12, HEAD, { r: RED, b: BONE, s: SHADE, w: WOOD });
+    // the oar: from his hands, between the pins, down to the blade
+    const lx = LOCK + dx, ly = sheer(LOCK) - 1;
+    const hx = Math.round(lx - pose.bx * 0.45), hy = ly - 7;
     const ex = lx + pose.bx, ey = ly + pose.by;
-    line(p, lx, ly + 2, ex, ey, 0, 6);
-    line(p, px + 2, GUNWALE - 13, hx, hy, 0, 4);
-    line(p, px + 2, GUNWALE - 13, hx, hy, BONE, 2);
+    const mx = lx + pose.bx * 0.62, my = ly + pose.by * 0.62;
+    line(p, lx, ly + 2, ex, ey, 0, 4);
+    line(p, mx, my, ex, ey, 0, 5);
     line(p, hx, hy, ex, ey, BONE, 2);
-    line(p, lx + pose.bx * 0.7, ly + pose.by * 0.7, ex, ey, BONE, 4);
-    // the sea closes over the keel: a black gap, then rows of waves, each sliding astern at its own pace
-    for (let r = 0; r < 3; r++) {
-      const y0 = SEA_TOP + r * 4;
+    line(p, mx, my, ex, ey, BONE, 3);
+    line(p, mx + 1, my, ex + 1, ey, SHADE, 1);
+    // his arm, bent at the elbow, a hand closed on the loom
+    const sx = px + 4 + Math.round(pose.lean * 1.2), sy = 28;
+    const elx = (sx + hx) / 2 + 1, ely = (sy + hy) / 2 + 3;
+    line(p, sx, sy, elx, ely, 0, 4), line(p, elx, ely, hx + 1, hy, 0, 4);
+    line(p, sx, sy, elx, ely, RED, 2), line(p, elx, ely, hx + 2, hy, RED, 2);
+    rect(p, hx - 1, hy - 1, 3, 3, BONE);
+    // the sea closes over the keel: a black gap, then rows of swell sliding astern, foam on some crests
+    for (let i = (SEA_TOP - 1) * W; i < p.length; i++) if (p[i] < SHADE) p[i] = 0;
+    for (let r = 0; r < 4; r++) {
+      const off = Math.floor(u * [4, 6, 8, 10][r]) + r * 5;
       for (let x = 0; x < W; x++) {
-        const c = (((x + Math.floor(u * [4, 7, 10][r]) + r * 4) % 8) + 8) % 8;
-        for (let j = -2; j < 4; j++) if (r === 0 && !(p[(y0 + j) * W + x] === BONE)) set(p, x, y0 + j, 0);
-        for (let j = 0; j < 3; j++) if (WAVE[j][c] === "#" && p[(y0 + j) * W + x] !== BONE) set(p, x, y0 + j, SEA);
+        const i = (x + off) % 16, y = SEA_TOP + r * 3 + (r > 0 ? 2 + (SWELL[i] >> 1) : SWELL[i]);
+        for (let j = 0; j < (r ? 1 : 2); j++) if (y + j < H && p[(y + j) * W + x] < SHADE) set(p, x, y + j, i < 3 && (Math.floor((x + off) / 16) + r) % 3 === 0 && !j ? BONE : SEA);
       }
     }
     return emit(p, color);

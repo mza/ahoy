@@ -3,7 +3,8 @@
  * wells up at the point and runs down the card and off it; then the dagger is
  * plucked out and thrown again, and quivers where it lands.
  *
- * Pixel art in block elements, two square pixels a cell, in four flat colours.
+ * Pixel art in block elements, two square pixels a cell, each pixel drawn on
+ * its own, in five flat colours, the card shaded down its right-hand edge.
  * Black gaps keep the shapes apart, so it reads in one ink too.
  */
 import type { Frame, Meta } from "../types.ts";
@@ -16,15 +17,15 @@ export const meta = {
   rows: 32,
   fps: 20,
   ground: "#000000",
-  // steel, hilt gold, the card's bone, blood red
-  palette: ["#8a94a6", "#f2b632", "#e8e2d0", "#e23a2e"],
+  // steel, hilt gold, the card's shade and its bone, blood red
+  palette: ["#8a94a6", "#f2b632", "#bdb6a6", "#e8e2d0", "#e23a2e"],
 } satisfies Meta;
 
 // ---- the pixel kit: a canvas of square pixels, one a cell wide and half a cell tall
 
 const W = meta.cols, H = meta.rows * 2;
 // A pixel is 0 for empty, else a palette index plus one.
-const IRON = 1, GOLD = 2, BONE = 3, RED = 4;
+const IRON = 1, GOLD = 2, DIM = 3, BONE = 4, RED = 5;
 
 const set = (p: Uint8Array, x: number, y: number, k: number) => {
   x = Math.round(x), y = Math.round(y);
@@ -45,6 +46,10 @@ const sprite = (p: Uint8Array, x: number, y: number, rows: string[], keys: Recor
     }),
   );
 };
+// The right-hand edges of one ink in another, as if lit from the left.
+const shade = (p: Uint8Array, ink: number, dark: number) => {
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (p[y * W + x] === ink && (x === W - 1 || !p[y * W + x + 1])) p[y * W + x] = dark;
+};
 // The canvas as half blocks. A cell has one ink: where its two pixels differ, the one further down the palette.
 const emit = (p: Uint8Array, color?: Uint8Array) => {
   const out: string[] = [];
@@ -62,65 +67,84 @@ const emit = (p: Uint8Array, color?: Uint8Array) => {
 
 // ---- the card and the dagger
 
-const POINT = 33; // the row the dagger's point comes down to
+const MID = 40; // the dagger's middle column, and the card's
+const POINT = 38; // the row the dagger's point comes down to
 const SPADE = [
-  "....#....",
-  "...###...",
-  "..#####..",
-  ".#######.",
-  "#########",
-  "#########",
-  "#########",
-  ".##.#.##.",
-  "....#....",
-  "...###...",
+  ".......#.......",
+  ".......#.......",
+  "......###......",
+  ".....#####.....",
+  "....#######....",
+  "...#########...",
+  "..###########..",
+  ".#############.",
+  "###############",
+  "###############",
+  "###############",
+  "###############",
+  ".#####.#.#####.",
+  "..###..#..###..",
+  "......###......",
+  ".....#####.....",
 ];
-const ACE = [".#.", "#.#", "###", "#.#", "#.#"];
+const ACE = ["..#..", ".#.#.", "#...#", "#...#", "#####", "#...#", "#...#"];
+const PIP = ["..#..", ".###.", "#####", "#####", "#.#.#", ".###."];
 const cut = (rows: string[]) => rows.map((r) => r.replaceAll("#", "_"));
+const turned = (rows: string[]) => [...rows].reverse().map((r) => [...r].reverse().join(""));
 // The dagger is out of the card from PLUCK, lands again at LAND, and has stopped quivering by the end.
 const WELL = 0.5, RUN = 2.7, PLUCK = 3.3, THROW = 3.7, LAND = 3.8, LOOP = 5;
 
 export default function dagger(): Frame {
-  // the card: bone, with the ace and the spade cut out of it
+  // the card: bone, its corners rounded, with the ace, its pips and the spade cut out of it
   const card = new Uint8Array(W * H);
-  rect(card, 21, 20, 38, 42, BONE);
-  for (const [x, y] of [[21, 20], [58, 20], [21, 61], [58, 61]]) set(card, x, y, 0);
-  sprite(card, 31, 40, cut(SPADE), {}, 2);
-  sprite(card, 24, 23, cut(ACE), {}, 2);
-  sprite(card, 50, 49, cut([...ACE].reverse()), {}, 2);
+  rect(card, 25, 24, 31, 39, BONE);
+  for (const x of [25, 55]) for (const y of [24, 62]) set(card, x, y, 0);
+  shade(card, BONE, DIM);
+  rect(card, 26, 62, 29, 1, DIM);
+  sprite(card, MID - 7, 43, cut(SPADE), {});
+  sprite(card, 27, 26, cut(ACE), {});
+  sprite(card, 27, 34, cut(PIP), {});
+  sprite(card, 49, 54, cut(turned(ACE)), {});
+  sprite(card, 49, 47, cut(turned(PIP)), {});
 
-  // the dagger, upright: pommel, bound grip, guard, and a blade with a shine down it
+  // the dagger, upright: a pommel, a wire-bound grip, a guard with its ends turned down, and the blade
   const knife = new Uint8Array(W * H);
-  disc(knife, 39.5, 2.5, 3.6, 3.4, GOLD);
-  rect(knife, 37, 6, 6, 6, GOLD);
-  rect(knife, 37, 7, 6, 1, 0);
-  rect(knife, 37, 9, 6, 1, 0);
-  rect(knife, 30, 12, 20, 3, GOLD);
-  rect(knife, 30, 15, 2, 1, GOLD);
-  rect(knife, 48, 15, 2, 1, GOLD);
-  for (let y = 16; y <= POINT; y++) {
-    const w = Math.min(8, 2 * Math.ceil((POINT + 1 - y) / 2));
-    rect(knife, 40 - w / 2, y, w, 1, IRON);
+  disc(knife, MID, 2.5, 3.6, 3.4, GOLD);
+  rect(knife, MID - 2, 7, 5, 7, GOLD);
+  for (const y of [9, 11]) rect(knife, MID - 2, y, 5, 1, 0);
+  rect(knife, MID - 10, 14, 21, 2, GOLD);
+  for (const s of [-1, 1]) {
+    rect(knife, MID + s * 10, 15, 1, 3, GOLD);
+    set(knife, MID + s * 11, 14, GOLD);
   }
-  rect(knife, 38, 18, 2, 8, BONE);
+  // seven pixels broad, a shine down one side and a fuller down the middle, narrowing to the point
+  for (let y = 17; y <= POINT; y++) {
+    const half = Math.min(3, Math.floor((POINT - y) / 2));
+    rect(knife, MID - half, y, 2 * half + 1, 1, IRON);
+  }
+  rect(knife, MID - 2, 18, 1, 14, BONE);
+  rect(knife, MID, 19, 1, 12, 0);
 
   return (t, { color } = {}) => {
     const u = ((t % LOOP) + LOOP) % LOOP;
     const p = new Uint8Array(W * H);
     p.set(card);
 
-    // the drop: it wells up, then runs down from under the point, a black line either side of it, and falls off the card
+    // the drop: it wells up under the point, then runs down, a black line either side of it, and falls off the card
     if (u < WELL) {
-      rect(p, 38, 35, 4, 4, 0);
-      rect(p, 39, 36, 2, 2, RED);
+      const big = u < WELL / 2 ? 0 : 1;
+      rect(p, MID - 1 - big, 40, 3 + 2 * big, 3 + big, 0);
+      rect(p, MID - big, 40, 1 + 2 * big, 2 + big, RED);
+      set(p, MID, 40, RED);
     } else if (u < PLUCK) {
-      const head = 37 + Math.round((Math.min(u - WELL, RUN - WELL) / (RUN - WELL)) * 32), end = Math.min(head, 61);
-      rect(p, 38, 36, 4, end - 35, 0);
-      rect(p, 39, 36, 2, end - 35, RED);
+      const head = 42 + Math.round((Math.min(u - WELL, RUN - WELL) / (RUN - WELL)) * 26), end = Math.min(head, 62);
+      rect(p, MID - 1, 40, 3, end - 39, 0);
+      rect(p, MID, 40, 1, end - 39, RED);
       if (head < H + 3) {
-        rect(p, 37, head - 2, 6, 6, 0);
-        rect(p, 38, head - 1, 4, 4, RED);
-        if (head > 62) rect(p, 37, 62, 6, head - 63, 0);
+        rect(p, MID - 2, head - 2, 5, 5, 0);
+        rect(p, MID - 1, head - 1, 3, 3, RED);
+        set(p, MID, head - 2, RED);
+        if (head > 63) rect(p, MID - 2, 63, 5, head - 64, 0);
       }
     }
 
@@ -134,9 +158,8 @@ export default function dagger(): Frame {
         const dx = Math.round((lean * (POINT - y)) / POINT);
         for (let x = 0; x < W; x++) {
           const k = knife[y * W + x];
-          if (!k) continue;
-          if (pass) set(p, x + dx, y + dy, k);
-          else rect(p, x + dx - 2, y + dy - 2, 5, 5, 0);
+          if (pass) k && set(p, x + dx, y + dy, k);
+          else if (k || (x === MID && y >= 19 && y < 31)) rect(p, x + dx - 1, y + dy - 1, 3, 3, 0);
         }
       }
     return emit(p, color);

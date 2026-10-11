@@ -1,12 +1,13 @@
 /*
  * skeleton-key: a big old iron key lying on its side, its bow (the handle) a
- * skull, a long shank with two collars on it, and three chunky teeth hanging
- * from the far end. It bobs a cell up and down, a glint runs along the iron
+ * skull, a long shank with turned collars on it, and a toothed bit hanging
+ * from the far end. It bobs a pixel up and down, a glint runs along the iron
  * from the skull to the teeth, and a sparkle winks in one eye socket.
  *
- * Pixel art in block elements, two square pixels a cell, in three flat
- * colours. The key is drawn once, all in iron so it reads as one thing; the
- * glint is a slanted band of bone that crosses it.
+ * Pixel art in block elements, two square pixels a cell, each pixel drawn on
+ * its own, in three flat colours. The key is drawn once, all in iron so it
+ * reads as one thing, shaded down its right-hand edges; the glint is a
+ * slanted band of bone that crosses it.
  */
 import type { Frame, Meta } from "../types.ts";
 
@@ -69,68 +70,83 @@ const emit = (p: Uint8Array, color?: Uint8Array) => {
 
 // ---- the key
 
-const SKULL = [
-  "...########...",
-  ".############.",
-  "##############",
-  "##############",
-  "##____##____##",
-  "##____##____##",
-  "##____##____##",
-  "######__######",
-  ".############.",
-  "..##########..",
-  "..#_##__##_#..",
-  "..#_##__##_#..",
-  "...########...",
+const SX = 17, SY = 27, SK = 0.8; // the middle of the skull's cranium, and its size against one 35 pixels wide
+const MID = 30; // the pixel row down the middle of the shank
+// The shank, column by column from the skull's cheek: how far it reaches either side of its middle row.
+const TURNED = "224555422222222222455422222222222222222222222332";
+const BIT = [
+  "###############",
+  "####..####..###",
+  "####..####..###",
+  "####..####..###",
+  "####..####..###",
+  "####..####..#..",
+  "..##..####..#..",
+  "..##..####..###",
+  "..##..####..###",
+  "####........###",
+  "####........###",
+  "####........###",
+  "####........###",
 ];
-const TEETH = [12, 8, 12]; // how far each tooth hangs below the shank
 const SPARKLE = [
-  [".#.", "###", ".#."],
   ["..#..", "..#..", "#####", "..#..", "..#.."],
-  [".#.", "###", ".#."],
+  ["...#...", "...#...", "...#...", "#######", "...#...", "...#...", "...#..."],
+  ["....#....", "....#....", "..#.#.#..", "...###...", "#########", "...###...", "..#.#.#..", "....#....", "....#...."],
+  ["...#...", "...#...", "...#...", "#######", "...#...", "...#...", "...#..."],
+  ["..#..", "..#..", "#####", "..#..", "..#.."],
 ];
-const X0 = 4, Y0 = 18; // the skull's top left corner
-const MID = Y0 + 12; // the pixel row the shank's top edge runs along
 const LOOP = 3.6, RUN = 1.5; // seconds a loop, and seconds the glint takes to cross
+
+// The skull, face on, drawn a pixel at a time from its curves.
+const skull = (p: Uint8Array) => {
+  for (let py = 0; py < H; py++)
+    for (let px = 0; px < W; px++) {
+      const x = Math.abs(px + 0.5 - SX) / SK, y = (py + 0.5 - SY) / SK;
+      if (!((x / 17.5) ** 2 + (y / 15.5) ** 2 < 1 || ((x - 12) / 3.6) ** 2 + ((y - 9) / 3.2) ** 2 < 1 || (x < 10.5 && y >= 10 && y < 24))) continue;
+      // the sockets, each under a brow that slants down towards the nose, and the nose
+      const out = x - 8;
+      if ((out / 5.7) ** 2 + ((y - 3) / 5.3) ** 2 < 1 && y >= -2.5 + 0.3 * (5.7 - out)) continue;
+      if (y >= 10 && y < 15.5 && x < (y - 10) * 0.55 + 0.6 && !(y >= 13 && x < 0.6)) continue;
+      p[py * W + px] = IRON;
+    }
+  // the mouth, the gaps between the teeth, and a crack in the crown
+  const X = (u: number) => Math.floor(SX + u * SK), Y = (v: number) => Math.floor(SY + v * SK);
+  for (let x = X(-8); x <= X(8); x++) set(p, x, Y(16.5), 0);
+  for (const g of [-6, -2, 2, 6]) for (let y = Y(16.5); y < Y(24); y++) set(p, X(g), y, 0);
+  for (const [u, v] of [[-6, -15], [-6, -14], [-5, -13], [-6, -12], [-7, -11], [-6, -10]]) set(p, X(u), Y(v), 0);
+};
 
 export default function skeletonKey(): Frame {
   // what never changes: the key
   const still = new Uint8Array(W * H);
-  sprite(still, X0, Y0, SKULL, { "#": IRON }, 2);
-  // the shank out of the side of the skull, two collars on it, and the teeth hanging from its end
-  rect(still, X0 + 28, MID, 44, 6, IRON);
-  rect(still, X0 + 28, MID + 4, 28, 2, SHADE);
-  for (const x of [X0 + 32, X0 + 48]) {
-    rect(still, x, MID - 4, 4, 14, IRON);
-    rect(still, x, MID + 8, 4, 2, SHADE);
-  }
-  TEETH.forEach((n, i) => {
-    rect(still, X0 + 56 + 6 * i, MID + 6, 4, n, IRON);
-    rect(still, X0 + 56 + 6 * i, MID + 4 + n, 4, 2, SHADE);
-  });
-  // the jaw in shade
-  for (let y = Y0 + 24; y < Y0 + 26; y++) for (let x = 0; x < X0 + 28; x++) if (still[y * W + x]) still[y * W + x] = SHADE;
+  skull(still);
+  // the shank out of the skull's cheek, turned on a lathe, and the bit hanging from its end
+  const x0 = SX + 12;
+  [...TURNED].forEach((c, i) => rect(still, x0 + i, MID - Number(c), 1, 2 * Number(c) + 1, IRON));
+  sprite(still, x0 + 29, MID + 3, BIT, { "#": IRON });
+  // iron's right-hand edges in its shade, as if lit from the left
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (still[y * W + x] === IRON && (x === W - 1 || !still[y * W + x + 1])) still[y * W + x] = SHADE;
 
   return (t, { color } = {}) => {
     const u = ((t % LOOP) + LOOP) % LOOP;
     const p = new Uint8Array(W * H);
-    // the bob: down a cell (two pixels, so the shading keeps its edges) for half of every loop
-    const dy = u < LOOP / 2 ? 0 : 2;
+    // the bob: down a pixel for half of every loop
+    const dy = u < LOOP / 2 ? 0 : 1;
     // the glint: a slanted band of bone crossing the iron from the skull to the teeth
     const g = -30 + (((u + 0.9) % LOOP) / RUN) * 120;
     for (let y = 0; y < H; y++)
       for (let x = 0; x < W; x++) {
         let k = still[y * W + x];
         if (!k) continue;
-        if (Math.abs(x + (y - MID) - g) < 2.5) k = BONE;
+        if (Math.abs(x + (y - MID) - g) < 1.5) k = BONE;
         set(p, x, y + dy, k);
       }
     // a sparkle in one eye socket, now and then
-    const s = Math.floor((u - 2.2) / 0.12);
+    const s = Math.floor((u - 2.2) / 0.1);
     if (s >= 0 && s < SPARKLE.length) {
-      const n = SPARKLE[s].length;
-      sprite(p, X0 + 21 - n, Y0 + 11 + dy - n, SPARKLE[s], { "#": BONE }, 2);
+      const n = SPARKLE[s].length >> 1;
+      sprite(p, SX + 6 - n, SY + 2 + dy - n, SPARKLE[s], { "#": BONE });
     }
     return emit(p, color);
   };

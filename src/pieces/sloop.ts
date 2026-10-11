@@ -1,31 +1,33 @@
 /*
  * sloop: a small single-masted pirate sloop, seen side-on, bow to the right.
- * She bobs on three rows of waves that scroll past, and the black flag at her
- * masthead flaps.
+ * She bobs on rows of swell that slide past, foam on the crests, and the black
+ * flag at her masthead ripples.
  *
- * Pixel art in block elements, two square pixels a cell, in four flat colours.
- * The ship is drawn once and set down a pixel higher or lower each frame; black
- * gaps keep sail, mast, hull and sea apart, so it reads in one ink too.
+ * Pixel art in block elements, two square pixels a cell, each pixel drawn on
+ * its own, in five flat colours: plank seams, ports and a rail on the hull, a
+ * reef band on the mainsail, stays from the masthead, the sails shaded down
+ * their right-hand edges. The ship is drawn once and set down a pixel higher
+ * or lower each frame. It reads in one ink too.
  */
 import type { Frame, Meta } from "../types.ts";
 
 export const meta = {
   name: "sloop",
   category: "scenes",
-  note: "a pirate sloop bobbing on pixel waves, her black flag flapping",
+  note: "a pirate sloop bobbing on the swell, her black flag rippling",
   cols: 80,
   rows: 32,
   fps: 20,
   ground: "#000000",
-  // the flag's iron shade, sea blue, wood, bone
-  palette: ["#59616f", "#3a7ca5", "#a8703a", "#e8e2d0"],
+  // sea blue, the flag's iron shade, wood, bone's shade, bone
+  palette: ["#3a7ca5", "#59616f", "#a8703a", "#b9b2a0", "#e8e2d0"],
 } satisfies Meta;
 
 // ---- the pixel kit: a canvas of square pixels, one a cell wide and half a cell tall
 
 const W = meta.cols, H = meta.rows * 2;
 // A pixel is 0 for empty, else a palette index plus one.
-const FLAG = 1, SEA = 2, WOOD = 3, BONE = 4;
+const SEA = 1, FLAG = 2, WOOD = 3, SHADE = 4, BONE = 5;
 
 const set = (p: Uint8Array, x: number, y: number, k: number) => {
   x = Math.round(x), y = Math.round(y);
@@ -84,29 +86,43 @@ const emit = (p: Uint8Array, color?: Uint8Array) => {
 // ---- the sloop and her sea
 
 const MAST = 39;
-// The flag, flying towards the bow: three shapes, played there and back.
-const FLAGS = [
-  ["#####......", "#########..", "##oo#######", "##oo#######", "###########", "..#########", "......#####"],
-  ["...........", "###########", "##oo#######", "##oo#######", "###########", "###########", "..........."],
-  ["......#####", "..#########", "##oo#######", "##oo#######", "###########", "#########..", "#####......"],
-];
-// One wave, eight pixels long; a row of sea is this over and over.
-const WAVE = ["..####..", "########", "##....##"];
-const SEA_TOP = 50;
+// The top of the hull at each column: a sheer that rises to bow and stern, and a raised deck aft.
+const deck = (x: number) => 39 - Math.round(4 * ((x - 40) / 31) ** 2);
+const sheer = (x: number) => deck(x) - (x < 25 ? 3 : 0);
+// A swell, sixteen pixels long: how far below its crest the water is at each pixel.
+const SWELL = Array.from({ length: 16 }, (_, i) => Math.round(1 - Math.cos((i / 16) * 2 * Math.PI)));
+// The skull on the flag.
+const SKULL = [".ooo.", "o_o_o", "ooooo", ".o_o."];
+const SEA_TOP = 51;
 const LOOP = 8;
 
 export default function sloop(): Frame {
-  // what never changes shape: hull, mast, bowsprit and sails
+  // what never changes shape: hull, spars, sails and rigging
   const ship = new Uint8Array(W * H);
-  // the hull: a raised stern at the left, the bow rising to a point at the right
-  poly(ship, [[10, 35], [25, 35], [25, 40], [60, 40], [69, 36], [59, 53], [17, 53]], WOOD);
-  // three ports along her side
-  for (const x of [30, 40, 50]) rect(ship, x, 44, 3, 2, 0);
-  line(ship, 66, 36, 77, 31, WOOD, 2);
-  rect(ship, MAST, 1, 2, 39, WOOD);
-  // the big mainsail aft of the mast, under its gaff, and the jib out to the bowsprit
-  poly(ship, [[36, 10], [36, 33], [8, 33], [8, 30], [20, 5]], BONE);
-  poly(ship, [[43, 9], [43, 33], [70, 33]], BONE);
+  const hull = (x: number, y: number) =>
+    x >= Math.max(9, 9 + Math.round((y - 33) * 0.45)) && x <= 71 - Math.round(14 * Math.max(0, (y - 35) / 19) ** 1.5) && y >= sheer(x) && y < 56;
+  for (let y = 30; y < 56; y++) for (let x = 0; x < W; x++) if (hull(x, y)) set(ship, x, y, WOOD);
+  // a rail and two plank seams following the sheer, three ports, two lights in the stern
+  for (let x = 0; x < W; x++) for (const d of [2, 7, 12]) if (hull(x - 1, deck(x) + d) && hull(x + 1, deck(x) + d)) set(ship, x, deck(x) + d, 0);
+  for (const x of [31, 41, 51]) rect(ship, x, deck(x) + 4, 2, 2, 0);
+  for (const x of [14, 19]) rect(ship, x, deck(x), 2, 1, 0);
+  line(ship, 67, 36, 79, 30, WOOD);
+  line(ship, 67, 37, 79, 31, WOOD);
+  // the mainsail aft of the mast, between gaff and boom, and the jib
+  poly(ship, [[37, 11], [37, 31], [9, 32], [18, 6]], BONE);
+  poly(ship, [[43, 8], [43, 31], [74, 31]], BONE);
+  // a reef band across the mainsail, its points hanging from it, and a seam down each sail
+  line(ship, 11, 25, 37, 24, 0);
+  for (let x = 14; x < 36; x += 4) rect(ship, x, 27, 1, 2, 0);
+  line(ship, 27, 9, 24, 23, SHADE), line(ship, 24, 26, 23, 31, SHADE);
+  line(ship, 52, 16, 52, 30, SHADE);
+  for (let y = 0; y < H; y++) for (let x = 0; x < W - 1; x++) if (ship[y * W + x] === BONE && !ship[y * W + x + 1]) ship[y * W + x] = SHADE;
+  // the stays: forestay to the bowsprit's tip, halyard to the gaff's peak
+  line(ship, MAST + 2, 3, 78, 29, SHADE);
+  line(ship, MAST - 1, 3, 18, 3, SHADE);
+  line(ship, 38, 9, 17, 4, WOOD);
+  line(ship, 38, 33, 7, 34, WOOD);
+  rect(ship, MAST, 1, 2, 38, WOOD);
 
   return (t, { color } = {}) => {
     const u = ((t % LOOP) + LOOP) % LOOP;
@@ -114,13 +130,23 @@ export default function sloop(): Frame {
     // she rides up a pixel and down a pixel on a two-second swell
     const bob = [0, 1, 0, -1][Math.floor(u * 2) % 4];
     blit(p, ship, bob);
-    sprite(p, MAST + 3, 1 + bob, FLAGS[[0, 1, 2, 1][Math.floor(u * 6) % 4]], { "#": FLAG, o: BONE });
-    // the sea closes over her keel: a black gap, then rows of waves, each sliding its own way
+    // the flag, a ripple running out along it, the skull riding the cloth
+    const ph = Math.floor(u * 8);
+    for (let i = 0; i < 13; i++) {
+      const dy = Math.round(Math.sin(((i - ph) / 8) * 2 * Math.PI) * 1.4 * (i / 12));
+      rect(p, MAST + 3 + i, 2 + bob + dy, 1, i > 10 ? 6 : 8, FLAG);
+      if (i >= 3 && i < 8) SKULL.forEach((row, j) => row[i - 3] !== "." && set(p, MAST + 3 + i, 4 + bob + dy + j, row[i - 3] === "o" ? BONE : 0));
+    }
+    // the sea closes over her keel: a black gap, then rows of swell, each sliding its own way, foam on some crests
     rect(p, 0, SEA_TOP - 1, W, H - SEA_TOP + 1, 0);
-    for (let r = 0; r < 3; r++) {
-      const off = Math.floor(u * [3, -2, 5][r]) + r * 4;
-      for (let x = 0; x < W; x++)
-        for (let j = 0; j < 3; j++) if (WAVE[j][(((x + off) % 8) + 8) % 8] === "#") set(p, x, SEA_TOP + r * 5 + j, SEA);
+    for (let r = 0; r < 4; r++) {
+      const off = Math.floor(u * [4, -2, 6, -4][r]) + r * 5;
+      for (let x = 0; x < W; x++) {
+        const i = (((x + off) % 16) + 16) % 16, y = SEA_TOP + r * 3 + (r > 0 ? 2 + (SWELL[i] >> 1) : SWELL[i]);
+        set(p, x, y, SEA);
+        if (r === 0) set(p, x, y + 1, SEA);
+        if (i < 3 && (Math.floor((x + off) / 16) + r) % 3 === 0) set(p, x, y, BONE);
+      }
     }
     return emit(p, color);
   };

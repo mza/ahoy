@@ -1,11 +1,14 @@
 /*
  * ship-in-a-bottle: a corked bottle lying on its side on a little wooden stand,
  * a tiny three-masted ship inside it on a strip of sea. The ship rocks, her
- * masts swaying a pixel or two either way, and a glint slides along the glass.
+ * masts swaying a pixel or two either way, the sea slides under her, and a
+ * glint runs along the glass.
  *
- * Pixel art in block elements, two square pixels a cell, in four flat colours.
- * The glass is an outline two pixels thick; the ship is a sprite two pixels to
- * each of its own, with black between every sail, so it reads in one ink too.
+ * Pixel art in block elements, two square pixels a cell, each pixel drawn on
+ * its own, in five flat colours: the glass a rounded outline with a thin
+ * highlight inside it, the ship with her sails shaded down their right-hand
+ * edges, stays between her mastheads, a jib and a seam along her hull. It
+ * reads in one ink too.
  */
 import type { Frame, Meta } from "../types.ts";
 
@@ -17,15 +20,15 @@ export const meta = {
   rows: 32,
   fps: 20,
   ground: "#000000",
-  // ghost cyan glass, sea blue, wood, bone
-  palette: ["#5fd7c9", "#3a7ca5", "#a8703a", "#e8e2d0"],
+  // ghost cyan glass, sea blue, wood, bone's shade, bone
+  palette: ["#5fd7c9", "#3a7ca5", "#a8703a", "#b9b2a0", "#e8e2d0"],
 } satisfies Meta;
 
 // ---- the pixel kit: a canvas of square pixels, one a cell wide and half a cell tall
 
 const W = meta.cols, H = meta.rows * 2;
 // A pixel is 0 for empty, else a palette index plus one.
-const GLASS = 1, SEA = 2, WOOD = 3, BONE = 4;
+const GLASS = 1, SEA = 2, WOOD = 3, SHADE = 4, BONE = 5;
 
 const set = (p: Uint8Array, x: number, y: number, k: number) => {
   x = Math.round(x), y = Math.round(y);
@@ -81,64 +84,96 @@ const emit = (p: Uint8Array, color?: Uint8Array) => {
 
 // ---- the bottle and the ship
 
-// The ship, bow to the right: three masts, two sails on each, a bowsprit.
-const SHIP = [
-  "..........w..........",
-  "....w...sssss...w....",
-  "..sssss.sssss.sssss..",
-  "..sssss.sssss.sssss..",
-  "....w.....w.....w....",
-  "..sssss.sssss.sssss..",
-  "..sssss.sssss.sssss..",
-  "..sssss.sssss.sssss..",
-  "....w.....w.....w...w",
-  "ww..w.....w.....w.ww.",
-  "wwwwwwwwwwwwwwwwwwww.",
-  ".wwwwwwwwwwwwwwwwww..",
-  "..wwwwwwwwwwwwwwww...",
+const CY = 27.5; // the bottle's axis
+// Half the bottle's height at each column: a base with rounded corners, a long body, a shoulder curving in to the neck, a lip.
+const half = (x: number) => {
+  if (x < 2 || x > 73) return 0;
+  if (x < 9) return 14 + Math.sqrt(49 - (9 - x) ** 2);
+  if (x < 46) return 21;
+  if (x < 62) return 6 + 15 * (0.5 + 0.5 * Math.cos(((x - 46) / 16) * Math.PI));
+  return x < 70 ? 6 : 8;
+};
+// The masts, from the stern: where each stands, where it tops out, and how wide its topsail and course are.
+const MASTS = [
+  { x: 17, top: 15, w: 3 },
+  { x: 28, top: 11, w: 4 },
+  { x: 39, top: 14, w: 3 },
 ];
-const SHIP_X = 8, SHIP_Y = 14;
-const WAVE = ["..####..", "########"];
+const DECK = 35;
+// A swell, sixteen pixels long: how far below its crest the water is at each pixel.
+const SWELL = Array.from({ length: 16 }, (_, i) => Math.round(0.5 - 0.5 * Math.cos((i / 16) * 2 * Math.PI)));
 const LOOP = 6;
 
 export default function shipInABottle(): Frame {
-  // the bottle's whole shape: a body with its flat base to the left, a shoulder, a neck and a lip
   const shape = new Uint8Array(W * H);
-  rect(shape, 4, 6, 46, 44, 1);
-  rect(shape, 2, 8, 2, 40, 1);
-  poly(shape, [[50, 6], [64, 21], [64, 34], [50, 49]], 1);
-  rect(shape, 64, 21, 10, 14, 1);
-  rect(shape, 70, 19, 4, 18, 1);
-  // what never moves: the glass as an outline, the cork, the stand, and the sea inside
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (Math.abs(y + 0.5 - CY) < half(x)) shape[y * W + x] = 1;
+  // what never moves: the glass as an outline, the highlight inside it, the cork, the stand
   const still = new Uint8Array(W * H);
   const glass = new Uint8Array(W * H);
-  for (let y = 0; y < H; y++)
-    for (let x = 0; x < W; x++) {
-      if (shape[y * W + x] && !within(shape, x, y, 2)) still[y * W + x] = glass[y * W + x] = GLASS;
-      if (y >= 42 && x < 58 && within(shape, x, y, 4)) still[y * W + x] = SEA;
-    }
-  // the cork: a plug in the mouth and a head outside it
-  rect(still, 68, 23, 6, 10, WOOD);
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (shape[y * W + x] && !within(shape, x, y, 2) && !(x > 71 && Math.abs(y + 0.5 - CY) < 6)) still[y * W + x] = glass[y * W + x] = GLASS;
+  rect(still, 10, 10, 12, 1, GLASS);
+  rect(still, 34, 10, 4, 1, GLASS);
+  rect(still, 5, 14, 1, 8, GLASS);
+  // the cork: a plug in the mouth and a wider head outside it, pitted
+  rect(still, 67, 24, 7, 8, WOOD);
   rect(still, 74, 22, 4, 12, WOOD);
-  // the stand: two cradles on a plank with feet
-  for (const x of [10, 40]) {
-    rect(still, x, 52, 8, 4, WOOD);
-    rect(still, x + 2, 52, 4, 2, 0);
+  rect(still, 78, 23, 1, 10, WOOD);
+  for (const [x, y] of [[69, 26], [72, 29], [76, 25], [75, 30], [77, 28]]) set(still, x, y, 0);
+  // the stand: two cradles cut to the bottle's round, on a plank with feet
+  for (const x0 of [4, 45])
+    for (let y = 40; y < 56; y++)
+      for (let x = x0; x < x0 + 9; x++) {
+        let clear = true;
+        for (let j = -2; j <= 2; j++) for (let i = -2; i <= 2; i++) if (shape[(y + j) * W + x + i]) clear = false;
+        if (clear) still[y * W + x] = WOOD;
+      }
+  rect(still, 2, 56, 54, 3, WOOD);
+    rect(still, 4, 60, 50, 1, WOOD);
+  rect(still, 5, 61, 6, 2, WOOD);
+  rect(still, 47, 61, 6, 2, WOOD);
+
+  // the ship, upright, on a canvas of her own
+  const ship = new Uint8Array(W * H);
+  for (const m of MASTS) {
+    // a topsail and a course, each a little fuller at the foot, a pixel of black between them and the mast showing through
+    for (let j = 0; j < 6; j++) rect(ship, m.x - m.w + (j < 1 ? 1 : 0), m.top + 2 + j, 2 * m.w + 1 - (j < 1 ? 2 : 0), 1, BONE);
+    for (let j = 0; j < 9; j++) rect(ship, m.x - m.w - 1 + (j < 1 ? 1 : 0), m.top + 9 + j, 2 * m.w + 3 - (j < 1 ? 2 : 0), 1, BONE);
+    rect(ship, m.x, m.top + 4, 1, 3, SHADE);
+    rect(ship, m.x, m.top + 11, 1, 6, SHADE);
   }
-  rect(still, 4, 56, 50, 4, WOOD);
-  rect(still, 6, 60, 6, 2, WOOD);
-  rect(still, 46, 60, 6, 2, WOOD);
+  // the jib, down to the bowsprit
+  poly(ship, [[45, 19], [45, 31], [51, 31]], BONE);
+  for (let y = 0; y < H; y++) for (let x = 0; x < W - 1; x++) if (ship[y * W + x] === BONE && !ship[y * W + x + 1]) ship[y * W + x] = SHADE;
+  for (const m of MASTS) {
+    rect(ship, m.x, m.top, 1, 2, WOOD);
+    rect(ship, m.x, m.top + 8, 1, 1, WOOD);
+    rect(ship, m.x, m.top + 18, 1, DECK - m.top - 18, WOOD);
+  }
+  // stays: masthead to masthead, down to the stern, and out to the bowsprit's tip
+  line(ship, 18, 15, 27, 11, SHADE), line(ship, 29, 11, 38, 14, SHADE);
+  line(ship, 16, 16, 10, 31, SHADE), line(ship, 40, 14, 52, 32, SHADE);
+  // the hull: a high stern, a seam along her side, a row of ports, the bowsprit
+  for (let y = 31; y < 42; y++)
+    for (let x = 8; x < 49; x++) if (y >= (x < 14 ? 32 : x > 43 ? 34 : DECK) && x >= 8 + Math.max(0, y - 36) && x <= 48 - Math.max(0, y - 34) * 1.2) set(ship, x, y, WOOD);
+  rect(ship, 10, 37, 34, 1, 0);
+  for (let x = 14; x < 44; x += 5) set(ship, x, 39, 0);
+  line(ship, 47, 34, 53, 32, WOOD);
 
   return (t, { color } = {}) => {
     const u = ((t % LOOP) + LOOP) % LOOP;
     const p = new Uint8Array(still);
-    // the sea's crests, sliding under the ship
-    const off = Math.floor(u * 4);
-    for (let x = 0; x < W; x++)
-      for (let j = 0; j < 2; j++) if (within(shape, x, 40 + j, 4) && x < 58 && WAVE[j][(x + off) % 8] === "#") set(p, x, 40 + j, SEA);
-    // the ship, her upper sails leaning further than her lower ones
+    // the ship, leaning from her waterline: the higher the row, the further it slides
     const s = [0, 1, 0, -1][Math.floor(u / 0.75) % 4];
-    SHIP.forEach((row, j) => sprite(p, SHIP_X + (j < 4 ? 2 * s : j < 8 ? s : 0), SHIP_Y + j * 2, [row], { w: WOOD, s: BONE }, 2));
+    for (let y = 8; y < 42; y++) {
+      const dx = Math.round((s * (40 - y)) / 11);
+      for (let x = 6; x < 56; x++) if (ship[y * W + x]) set(p, x + dx, y, ship[y * W + x]);
+    }
+    // the sea inside: a crest line sliding along, foam on it here and there, water below
+    const off = Math.floor(u * 8);
+    for (let x = 0; x < 62; x++) {
+      const i = (x + off) % 16, top = 41 + SWELL[i];
+      for (let y = top; y < 48; y++) if (within(shape, x, y, 3)) set(p, x, y, y === top && i > 13 && Math.floor((x + off) / 16) % 2 ? BONE : SEA);
+    }
     // the glint: a slanted band of bone crossing the glass from end to end, twice a loop
     const g = (30 + u * 40) % 120 - 10;
     for (let y = 0; y < H; y++)

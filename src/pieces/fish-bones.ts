@@ -4,10 +4,10 @@
  * and the forked tail sweeps after them; its jaw drops open and snaps shut,
  * and a red spark sits in its eye socket.
  *
- * Pixel art in block elements, two square pixels a cell, in two flat colours.
- * The head is hand-drawn rows at two pixels to each of its own; the spine,
- * ribs and tail are blocks and lines moved by whole pixels. Black gaps keep
- * the ribs apart, so it reads in one ink too.
+ * Pixel art in block elements, two square pixels a cell, each pixel drawn on
+ * its own, in two flat colours. The skull and jaw are outlines, curves through
+ * a few points, filled, the jaw turned about its hinge; the ribs and the rays
+ * of the tail are single-pixel curves riding the wave. It reads in one ink too.
  */
 import type { Frame, Meta } from "../types.ts";
 
@@ -36,17 +36,37 @@ const set = (p: Uint8Array, x: number, y: number, k: number) => {
 const rect = (p: Uint8Array, x: number, y: number, w: number, h: number, k: number) => {
   for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) set(p, x + i, y + j, k);
 };
-const line = (p: Uint8Array, x0: number, y0: number, x1: number, y1: number, k: number, thick = 1) => {
-  const n = Math.max(1, Math.ceil(Math.hypot(x1 - x0, y1 - y0) * 2));
-  for (let i = 0; i <= n; i++) rect(p, Math.round(x0 + ((x1 - x0) * i) / n - (thick - 1) / 2), Math.round(y0 + ((y1 - y0) * i) / n - (thick - 1) / 2), thick, thick, k);
+const disc = (p: Uint8Array, cx: number, cy: number, rx: number, ry: number, k: number) => {
+  for (let y = Math.floor(cy - ry); y <= cy + ry; y++)
+    for (let x = Math.floor(cx - rx); x <= cx + rx; x++) if (((x - cx) / rx) ** 2 + ((y - cy) / ry) ** 2 < 1) set(p, x, y, k);
 };
-// Rows of characters as pixels `scale` across: "." leaves the pixel alone, "_" empties it, others are looked up in `keys`.
-const sprite = (p: Uint8Array, x: number, y: number, rows: string[], keys: Record<string, number>, scale = 1) => {
-  rows.forEach((row, j) =>
-    [...row].forEach((c, i) => {
-      if (c !== ".") rect(p, x + i * scale, y + j * scale, scale, scale, c === "_" ? 0 : keys[c]);
-    }),
-  );
+type Pt = [number, number];
+// A filled outline: a pixel is inside if a ray to its left crosses the edges an odd number of times.
+const poly = (p: Uint8Array, pts: Pt[], k: number) => {
+  let x0 = W, x1 = 0, y0 = H, y1 = 0;
+  for (const [x, y] of pts) (x0 = Math.min(x0, x)), (x1 = Math.max(x1, x)), (y0 = Math.min(y0, y)), (y1 = Math.max(y1, y));
+  for (let y = Math.max(0, Math.floor(y0)); y <= Math.min(H - 1, y1); y++)
+    for (let x = Math.max(0, Math.floor(x0)); x <= Math.min(W - 1, x1); x++) {
+      let inside = false;
+      for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
+        const [xi, yi] = pts[i], [xj, yj] = pts[j];
+        if (yi > y + 0.5 !== yj > y + 0.5 && x + 0.5 < xi + ((xj - xi) * (y + 0.5 - yi)) / (yj - yi)) inside = !inside;
+      }
+      if (inside) set(p, x, y, k);
+    }
+};
+// A smooth curve through points, as many more points.
+const curve = (pts: Pt[]): Pt[] => {
+  const out: Pt[] = [];
+  const at = (i: number) => pts[Math.max(0, Math.min(pts.length - 1, i))];
+  for (let i = 0; i < pts.length - 1; i++)
+    for (let n = 0; n < 6; n++) {
+      const u = n / 6, a = at(i - 1), b = at(i), c = at(i + 1), d = at(i + 2);
+      const f = (k: 0 | 1) => 0.5 * (2 * b[k] + (c[k] - a[k]) * u + (2 * a[k] - 5 * b[k] + 4 * c[k] - d[k]) * u * u + (3 * b[k] - a[k] - 3 * c[k] + d[k]) * u * u * u);
+      out.push([f(0), f(1)]);
+    }
+  out.push(pts[pts.length - 1]);
+  return out;
 };
 // The canvas as half blocks. A cell has one ink: where its two pixels differ, the one further down the palette.
 const emit = (p: Uint8Array, color?: Uint8Array) => {
@@ -65,68 +85,86 @@ const emit = (p: Uint8Array, color?: Uint8Array) => {
 
 // ---- the fish, nose to the left
 
-const KEYS = { "#": BONE, r: RED };
-const HX = 2, HY = 14; // the head's top left pixel
-// The skull, two pixels to each of its own: a round socket with a spark in it, and a row of teeth.
-const SKULL = [
-  ".........#####..",
-  "......#########.",
-  "....###########.",
-  "...############.",
-  "..####____#####.",
-  ".####______####.",
-  ".####__rr__####.",
-  "#####__rr__####.",
-  "######____#####.",
-  "###############.",
-  "###############.",
-  ".#_#_#_#_######.",
+// The skull: over the crown from the snout to the back of the head, then forward along the mouth, tooth by tooth.
+const CROWN: Pt[] = [[2, 36], [2.5, 32], [6, 26], [12, 20], [20, 15.5], [28, 14], [33, 16], [35.5, 22], [36, 30], [35, 37]];
+const TEETH = [23, 19, 15, 11, 7]; // the middle column of each upper tooth; the lower ones sit between
+const SKULL: Pt[] = [...curve(CROWN), [26, 37], ...TEETH.flatMap((x): Pt[] => [[x + 2, 37], [x + 0.5, 40], [x - 1, 37]]), [3, 37]];
+// The jaw: along its teeth from the hinge to the chin, and back under.
+const HINGE: Pt = [33, 40];
+const JAW: Pt[] = [
+  [35, 39], [27, 41.2], ...[25, 21, 17, 13, 9].flatMap((x): Pt[] => [[x + 2, 41.2], [x + 0.5, 38.4], [x - 1, 41.2]]), [5, 41.2],
+  ...curve([[5, 42.5], [8, 46], [15, 48.5], [24, 48.5], [31, 46], [35, 42]]),
 ];
-// The jaw, hinged at its right end, with teeth of its own.
-const JAW = [
-  "..#_#_#_#######.",
-  "..#############.",
-  "....###########.",
-  ".......######...",
-];
-const CY = HY + 19; // the spine's middle pixel row
-const RIBS = [19, 20, 17, 13, 9]; // how long each pair is, head to tail
-const RIB0 = 37, STEP = 6; // the first rib's column, and the columns between ribs
-const TAIL = RIB0 + RIBS.length * STEP;
+const EYE: Pt = [17.5, 26.5];
+// The gill: a line down the back of the skull, as [column, row]s.
+const GILL: Pt[] = [[30, 18], [30, 19], [31, 20], [31, 21], [31, 22], [32, 23], [32, 24], [32, 25], [32, 26], [32, 27], [32, 28], [32, 29], [31, 30], [31, 31], [31, 32], [30, 33], [30, 34]];
+const CRACK: Pt[] = [[22, 15], [22, 16], [23, 17], [22, 18], [22, 19], [21, 20], [24, 18]];
+const CY = 33; // the spine's pixel row at rest
+const SPINE0 = 37, RIB0 = 39, STEP = 4; // where the spine starts, the first rib's column, and the columns between ribs
+const RIBS = [16, 19, 19, 17, 14, 11, 8]; // how long each pair is, head to tail
+const TAIL = RIB0 + RIBS.length * STEP - 1;
+// The tail fin, from the end of the spine: its forked outline, and the turn in degrees of each slit between its rays.
+const FIN: Pt[] = [[0, -2], [4, -8], [9, -14], [13, -18], [12.5, -10], [9.5, -3], [7.5, 0], [9.5, 3], [12.5, 10], [13, 18], [9, 14], [4, 8], [0, 2]];
+const SLITS = [-47, -33, 33, 47];
 const SWIM = 1.2, LOOP = 2 * SWIM; // one wave down the spine, and one snap of the jaw every two
 
 export default function fishBones(): Frame {
-  // what never moves: the skull
+  // what never moves: the skull, its socket, the spark in it, a gill line, a crack, a nostril
   const still = new Uint8Array(W * H);
-  sprite(still, HX, HY, SKULL, KEYS, 2);
+  poly(still, SKULL, BONE);
+  disc(still, EYE[0], EYE[1], 5.6, 5.6, 0);
+  disc(still, EYE[0], EYE[1], 2.1, 2.1, RED);
+  for (const [x, y] of [...GILL, ...CRACK, [6, 31], [7, 32]]) set(still, x, y, 0);
+
+  // the jaw at each angle it has been asked for, as the pixels it covers
+  const jaws = new Map<number, number[]>();
+  const jaw = (open: number) => {
+    let at = jaws.get(open);
+    if (!at) {
+      const q = new Uint8Array(W * H), c = Math.cos(open), s = Math.sin(open);
+      poly(q, JAW.map(([x, y]): Pt => [HINGE[0] + (x - HINGE[0]) * c + (y - HINGE[1]) * s, HINGE[1] - (x - HINGE[0]) * s + (y - HINGE[1]) * c]), BONE);
+      at = [];
+      for (let i = 0; i < q.length; i++) if (q[i]) at.push(i);
+      jaws.set(open, at);
+    }
+    return at;
+  };
 
   return (t, { color } = {}) => {
     const u = ((t % LOOP) + LOOP) % LOOP;
     const p = new Uint8Array(W * H);
     p.set(still);
 
-    // the jaw: it drops open, hangs, and snaps shut
-    const open = u < 0.5 ? 0 : u < 0.8 ? Math.round(((u - 0.5) / 0.3) * 8) : u < 1.3 ? 8 : u < 1.4 ? 4 : 0;
-    JAW.forEach((row, j) =>
-      [...row].forEach((c, i) => {
-        if (c === "#") rect(p, HX + 2 * i, HY + 2 * (SKULL.length + j) + Math.round((open * (13 - Math.min(i, 13))) / 13), 2, 2, BONE);
-      }),
-    );
+    // the jaw: it swings open about its hinge, hangs, and snaps shut
+    const open = (u < 0.5 ? 0 : u < 0.8 ? (u - 0.5) / 0.3 : u < 1.3 ? 1 : u < 1.4 ? 0.4 : 0) * 0.34;
+    for (const i of jaw(Math.round(open * 50) / 50)) p[i] = BONE;
 
-    // the wave down the spine: each rib rides it, and leans as it passes
-    const wave = (i: number) => (2 * Math.PI * t) / SWIM - i * 1.1;
-    const lift = (i: number) => Math.round((0.8 + i * 0.6) * Math.sin(wave(i)));
+    // the wave down the spine: every column of it rides the wave, more the nearer the tail
+    const wave = (x: number) => (2 * Math.PI * t) / SWIM - (x - SPINE0) * 0.2;
+    const lift = (x: number) => Math.round((0.4 + (x - SPINE0) * 0.11) * Math.sin(wave(x)));
+    for (let x = SPINE0; x <= TAIL + 2; x++) rect(p, x, CY - 1 + lift(x), 1, 2, BONE);
+    // the ribs: a knuckle on the spine and a thin curve up and down from it, leaning as the wave passes
     RIBS.forEach((len, i) => {
-      const x = RIB0 + i * STEP, y = CY + lift(i), lean = 3 + Math.round(1.4 * Math.cos(wave(i)));
-      rect(p, x - 1, y - 2, STEP, 4, BONE);
-      line(p, x, y - 3, x + lean, y - 3 - len, BONE, 2);
-      line(p, x, y + 2, x + lean, y + 2 + len, BONE, 2);
+      const x = RIB0 + i * STEP, y = CY + lift(x), lean = 4 + 1.6 * Math.cos(wave(x));
+      rect(p, x - 1, y - 2, 3, 4, BONE);
+      for (const side of [-1, 1]) {
+        const n = side < 0 ? len : len - 2;
+        for (let j = 0; j <= n; j++) {
+          const rx = x + Math.round(lean * (j / len) ** 1.7), ry = side < 0 ? y - 3 - j : y + 2 + j;
+          set(p, rx, ry, BONE);
+          if (j < 3) set(p, rx + 1, ry, BONE);
+        }
+      }
     });
-    // the tail: a stub of spine and a forked fin, sweeping last
-    const n = RIBS.length, y = CY + lift(n), far = lift(n + 1) - lift(n);
-    rect(p, TAIL - 1, y - 2, 4, 4, BONE);
-    line(p, TAIL + 3, y - 1, W - 3, y - 16 + far, BONE, 4);
-    line(p, TAIL + 3, y + 1, W - 3, y + 16 + far, BONE, 4);
+    // the tail: a forked fin on the end of the spine, slit between its rays, sweeping last
+    const y = CY + lift(TAIL + 1), sway = 0.16 * Math.sin(wave(TAIL + 6));
+    const c = Math.cos(sway), s = Math.sin(sway);
+    rect(p, TAIL, y - 2, 3, 4, BONE);
+    poly(p, FIN.map(([fx, fy]): Pt => [TAIL + 1.5 + fx * c - fy * s, y + fx * s + fy * c]), BONE);
+    for (const deg of SLITS) {
+      const a = (deg * Math.PI) / 180 + sway;
+      for (let j = 11; j <= (Math.abs(deg) > 40 ? 34 : 24); j++) set(p, Math.floor(TAIL + 1.5 + (Math.cos(a) * j) / 2), Math.floor(y + (Math.sin(a) * j) / 2), 0);
+    }
     return emit(p, color);
   };
 }

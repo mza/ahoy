@@ -3,8 +3,10 @@
  * running down across its shell. Its eyes sit on stalks, its claws snap open and shut
  * one after the other, and it scuttles a few pixels side to side.
  *
- * Pixel art in block elements, two square pixels a cell, in four flat colours.
- * Black gaps keep the shapes apart, so it reads in one ink too.
+ * Pixel art in block elements, two square pixels a cell, each pixel drawn on
+ * its own, in four flat colours: the shell bumped and speckled, the legs
+ * jointed, the claws toothed, the red shaded down its right-hand edges. Black
+ * gaps keep the shapes apart, so it reads in one ink too.
  */
 import type { Frame, Meta } from "../types.ts";
 
@@ -65,50 +67,65 @@ const emit = (p: Uint8Array, color?: Uint8Array) => {
 };
 const mod = (a: number, n: number) => ((a % n) + n) % n;
 
-// ---- the crab, drawn about its middle at x = 0
+// ---- the crab, drawn about the middle of its shell
 
 const KEYS = { r: RED, d: DARK, i: IRON, b: BONE };
-// two pixels to each of these
 const EYE = [
-  ".bbbb.",
-  "bbbbbb",
-  "bb__bb",
-  "bb__bb",
-  "bbbbbb",
-  ".bbbb.",
+  "...bbbbb...",
+  ".bbbbbbbbb.",
+  ".bbbbbbbbb.",
+  "bbbb___bbbb",
+  "bbb_____bbb",
+  "bbb_b___bbb",
+  "bbb_____bbb",
+  "bbbb___bbbb",
+  ".bbbbbbbbb.",
+  ".bbbbbbbbb.",
+  "...bbbbb...",
 ];
 const PATCH = [
-  ".iiii.",
-  "iiiiii",
-  "iiiiii",
-  "iiiiii",
-  ".iiii.",
-  "..ii..",
+  "..iiiiiii..",
+  ".iiiiiiiii.",
+  "iiiiiiiiiii",
+  "iiiiiiiiiii",
+  "iiiiiiiiiii",
+  "iiiiiiiiiii",
+  "iiiiiiiiiii",
+  ".iiiiiiiii.",
+  "..iiiiiii..",
+  "...iiiii...",
+  "....iii....",
 ];
-const GRIN = [
-  "_......_",
-  "__....__",
-  ".______.",
-];
-// Each leg: shoulder, knee and foot, for the right side; the left mirrors it.
+// Each leg on the right: shoulder, knee, ankle and toe; the left mirrors it.
 const LEGS = [
-  [16, 43, 27, 42, 34, 50],
-  [15, 48, 25, 50, 31, 58],
-  [10, 52, 18, 57, 21, 63],
+  [17, 43, 26, 40, 32, 46, 34, 53],
+  [16, 47, 25, 47, 30, 54, 31, 61],
+  [12, 51, 19, 53, 23, 59, 23, 63],
 ];
-// A claw: a round pincer held up on an arm, its jaws opening up and in. `side` is -1 left, 1 right.
+// Specks on the shell: [across, down] from its middle, mirrored.
+const SPECKS = [[5, -8], [12, -4], [15, 0], [9, -2]];
+// A limb's segment, from a little way past its joint so a black gap shows there.
+const seg = (p: Uint8Array, x0: number, y0: number, x1: number, y1: number, thick: number, gap: number) => {
+  const k = gap / Math.hypot(x1 - x0, y1 - y0);
+  line(p, x0 + (x1 - x0) * k, y0 + (y1 - y0) * k, x1, y1, RED, thick);
+};
+// A claw: a pincer held up on a jointed arm, its toothed jaws opening up and in. `side` is -1 left, 1 right.
 const claw = (p: Uint8Array, cx: number, side: number, open: boolean) => {
   const x = cx + side * 29, y = 17;
-  line(p, cx + side * 16, 37, cx + side * 30, 33, RED, 5);
-  rect(p, x - 3, 30, 6, 2, RED);
+  line(p, cx + side * 17, 37, cx + side * 25, 35, RED, 4);
+  seg(p, cx + side * 25, 35, cx + side * 29, 32, 4, 2.5);
+  rect(p, x - 2, 29, 4, 2, RED);
   disc(p, x, y, 9.5, 11, RED);
-  // the jaws: a wedge cut out of it, or only a slit when shut
+  // the jaws: a wedge cut out of it, or only a slit when shut, teeth notched along both edges
   const ax = x + side * 2, ay = y + 4, dx = -side * 0.42, dy = -0.91, half = open ? 0.55 : 0;
   for (let j = y - 12; j <= y + 12; j++)
     for (let i = x - 10; i <= x + 10; i++) {
       const vx = i - ax, vy = j - ay, along = vx * dx + vy * dy, across = Math.abs(vx * -dy + vy * dx);
-      if (along > 0 && across < Math.max(1.1, along * half)) set(p, i, j, 0);
+      const lim = Math.max(0.7, along * half);
+      if (along > 0 && (across < lim || (across < lim + 1.1 && along > 3 && Math.floor(along / 2) % 2 === 0))) set(p, i, j, 0);
     }
+  // a knuckle line where the pincer joins its wrist
+  rect(p, x - 4, 28, 9, 1, 0);
 };
 
 const LOOP = 3.6;
@@ -127,34 +144,43 @@ export default function pirateCrab(): Frame {
     const step = moving ? Math.floor(u * 10) % 2 : 0;
     const cx = 40 + off;
 
-    // legs first, every other one lifted as it walks
-    LEGS.forEach(([x0, y0, x1, y1, x2, y2], n) => {
+    // legs first, three joints each, tapering to a point, every other one lifted as it walks
+    LEGS.forEach(([x0, y0, x1, y1, x2, y2, x3, y3], n) => {
       for (const s of [-1, 1]) {
         const lift = moving && (n + (s > 0 ? 1 : 0) + step) % 2 ? 1 : 0;
         line(p, cx + s * x0, y0, cx + s * x1, y1 - lift, RED, 3);
-        line(p, cx + s * x1, y1 - lift, cx + s * x2, y2 - lift, RED, 3);
+        seg(p, cx + s * x1, y1 - lift, cx + s * x2, y2 - lift, 2, 3.5);
+        seg(p, cx + s * x2, y2 - lift, cx + s * x3, y3 - lift, 1, 2.5);
       }
     });
-    // the shell, with a black gap around it, shaded underneath, and a grin
+    // the shell, with a black gap around it, bumps along its top edge, and specks
     disc(p, cx, 41, 21, 14, 0);
-    disc(p, cx, 41, 19, 12, RED);
-    for (let y = 48; y < 54; y++) for (let x = cx - 19; x <= cx + 19; x++) if (((x - cx) / 19) ** 2 + ((y - 41) / 12) ** 2 < 1 && ((x - cx) / 19) ** 2 + ((y - 37) / 12) ** 2 >= 1) set(p, x, y, DARK);
-    sprite(p, cx - 8, 40, GRIN, KEYS, 2);
+    disc(p, cx, 41, 19.5, 12.5, RED);
+    for (let x = -14; x <= 14; x += 4) set(p, cx + x, 41 - Math.floor(12.5 * Math.sqrt(1 - (x / 19.5) ** 2)) - 1, RED);
+    for (const [x, y] of SPECKS) for (const s of [-1, 1]) set(p, cx + s * x, 41 + y, DARK);
+    // its underside in shade
+    for (let y = 46; y < 54; y++) for (let x = cx - 20; x <= cx + 20; x++) if (p[y * W + x] === RED && ((x - cx) / 19.5) ** 2 + ((y - 41) / 12.5) ** 2 < 1 && ((x - cx) / 21) ** 2 + ((y - 38) / 12.5) ** 2 >= 1) set(p, x, y, DARK);
 
     // the claws, snapping one after the other
     const q = mod(u, 0.9);
     claw(p, cx, -1, !(q >= 0.2 && q < 0.35));
     claw(p, cx, 1, !(q >= 0.35 && q < 0.5));
 
-    // the patch's strap, down behind the other stalk to the far edge of the shell, with a black gap either side
-    line(p, cx + 5, 13, cx - 15, 31, 0, 4);
-    line(p, cx + 5, 13, cx - 17, 33, IRON, 2);
+    // the patch's strap: down behind the other stalk to the far edge of the shell, and a stub of it the other way
+    line(p, cx + 6, 12, cx - 16, 32, IRON);
+    line(p, cx + 16, 7, cx + 19, 4, IRON);
     // eyes on stalks: the left a wide eyeball, its stalk in front of the strap; the right a solid patch
-    rect(p, cx - 15, 18, 8, 12, 0);
-    rect(p, cx - 13, 18, 4, 14, RED);
-    rect(p, cx + 9, 18, 4, 14, RED);
-    sprite(p, cx - 17, 4, EYE, KEYS, 2);
-    sprite(p, cx + 5, 4, PATCH, KEYS, 2);
+    rect(p, cx - 13, 17, 5, 13, 0);
+    rect(p, cx - 12, 17, 3, 14, RED);
+    rect(p, cx + 10, 17, 3, 14, RED);
+    sprite(p, cx - 16, 5, EYE, KEYS);
+    sprite(p, cx + 6, 5, PATCH, KEYS);
+
+    // red's right-hand edges in shade, as if lit from the left
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (p[y * W + x] === RED && (x === W - 1 || !p[y * W + x + 1])) p[y * W + x] = DARK;
+    // and last its grin, one pixel thick
+    for (let x = -8; x <= 8; x++) set(p, cx + x, 46 - Math.round((x * x) / 16), 0);
+    for (const s of [-1, 1]) set(p, cx + s * 9, 41, 0);
     return emit(p, color);
   };
 }

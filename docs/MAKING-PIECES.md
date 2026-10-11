@@ -86,7 +86,7 @@ The house style: bold silhouettes filled with one character per material (`8` bo
 
 Flat-colour pixel art: a canvas of square pixels, one a cell wide and half a cell tall (80×64 for a full-size piece), printed as `█ ▀ ▄` and nothing else, in two to four flat colours on black. `lit-fuse` is the one to copy: its "pixel kit" (`set`, `rect`, `disc`, `line`, `sprite`, `emit`) is pasted into each piece, since a piece can import nothing.
 
-- **One bold emblem** filling most of the frame, drawn at full resolution: a canvas pixel is the unit of detail. The user wants more resolution, not less; big pixels (a `sprite` at `scale` 2 or 3) look low-resolution next to `blackbeard`, and a first pass at `stede-bonnet` and `ghost-captain` at `scale` 3 was sent back for it. Draw curves with geometry or `sprite` rows at `scale` 1, and spend single pixels on detail: tooth gaps, a crack, a fuller down a blade, a shade colour down the right-hand edges. `stede-bonnet` has a skull drawn this way. (The first two dozen in the pack are chunkier than this.)
+- **One bold emblem** filling most of the frame, drawn at full resolution: a canvas pixel is the unit of detail. The user wants more resolution, not less; big pixels (a `sprite` at `scale` 2 or 3) look low-resolution next to `blackbeard`, and a first pass at `stede-bonnet` and `ghost-captain` at `scale` 3 was sent back for it. Draw curves with geometry or `sprite` rows at `scale` 1, and spend single pixels on detail: tooth gaps, a crack, a fuller down a blade, a shade colour down the right-hand edges. `stede-bonnet` has a skull drawn this way. The whole pack was drawn chunky first and then redrawn this way.
 - **A cell has one ink.** Where a cell's two pixels differ in colour, `emit` takes the one further down the palette, so keep colour boundaries on even pixel rows or put a black gap between colours.
 - **Black gaps, two pixels wide,** wherever one shape sits on another: in one ink every pixel is the same, and the gaps are all that is left of the drawing.
 - **Animate in poses and whole pixels:** a blink, a walk cycle, a glint, a bob. Precompute what never moves and `set` it back each frame.
@@ -133,7 +133,7 @@ Most pieces were made by parallel sub-agents, two pieces each, then reviewed tog
 ## Adding a piece to ahoy
 
 1. Put `src/pieces/<slug>.ts` in place, and check it: `node tools/art/check.mjs <slug>`.
-2. Import it in [`src/own.ts`](../src/own.ts) and add it to its group: `pirate`, `pixels`, `lore` or `voyages`. The terminal app and the screensaver both play that list.
+2. Import it in [`src/own.ts`](../src/own.ts) and add it to its group: `pirate`, `pixels`, `rogers`, `lore` or `voyages`. The terminal app and the screensaver both play that list.
 3. `npm run typecheck`, then `node src/cli.ts <slug>` and `./dist/ahoy` after `npm run build`. Check that `./dist/ahoy all | grep '\\u[0-9a-f]\{4\}'` prints nothing.
 4. `npm run saver` rebuilds `macos/build/Ahoy.saver`; snapshot it to check.
 5. Update the piece lists in the README, and regenerate the contact sheets in `docs/sheets/` if you like.
