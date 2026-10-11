@@ -131,14 +131,17 @@ import * as wingedSkull from "./pieces/winged-skull.ts";
 import * as wreckCoast from "./pieces/wreck-coast.ts";
 import * as xMarksTheSpot from "./pieces/x-marks-the-spot.ts";
 
-/** The groups, as listed, with the heading the picker gives each. */
-export const PACKS: [string, string][] = [
-  ["pirate", "pirate pack"],
-  ["pixels", "pirate pixels"],
-  ["rogers", "jolly rogers"],
-  ["lore", "pirate lore"],
-  ["voyages", "pirate scenes"],
+/**
+ * The groups, as listed, with the heading the picker gives each, and whether it is a prototype: the packs made on
+ * the way to the scenes, which are listed only when asked for.
+ */
+export const PACKS: [pack: string, heading: string, prototype?: boolean][] = [
+  ["season-one", "season one (2026)"],
   ["aws", "just for fun"],
+  ["pirate", "pirate pack", true],
+  ["pixels", "pirate pixels", true],
+  ["rogers", "jolly rogers", true],
+  ["lore", "pirate lore", true],
 ];
 
 export const OWN_PIECES: [slug: string, pack: string, piece: Piece][] = [
@@ -248,23 +251,23 @@ export const OWN_PIECES: [slug: string, pack: string, piece: Piece][] = [
   ["crossed-flintlocks", "lore", crossedFlintlocks],
   ["crows-nest", "lore", crowsNest],
   ["message-in-a-bottle", "lore", messageInABottle],
-  ["skull-island", "voyages", skullIsland],
-  ["storm-at-sea", "voyages", stormAtSea],
-  ["port-royal", "voyages", portRoyal],
-  ["pirate-cove", "voyages", pirateCove],
-  ["glowing-wake", "voyages", glowingWake],
-  ["sea-battle", "voyages", seaBattle],
-  ["burning-ship", "voyages", burningShip],
-  ["masthead-dawn", "voyages", mastheadDawn],
-  ["sunken-galleon", "voyages", sunkenGalleon],
-  ["wreck-coast", "voyages", wreckCoast],
-  ["treasure-cave", "voyages", treasureCave],
-  ["pirate-tavern", "voyages", pirateTavern],
-  ["kraken-rising", "voyages", krakenRising],
-  ["ghost-ship", "voyages", ghostShip],
-  ["hidden-lagoon", "voyages", hiddenLagoon],
-  ["aurora-passage", "voyages", auroraPassage],
-  ["volcano-isle", "voyages", volcanoIsle],
-  ["lighthouse-reef", "voyages", lighthouseReef],
+  ["skull-island", "season-one", skullIsland],
+  ["storm-at-sea", "season-one", stormAtSea],
+  ["port-royal", "season-one", portRoyal],
+  ["pirate-cove", "season-one", pirateCove],
+  ["glowing-wake", "season-one", glowingWake],
+  ["sea-battle", "season-one", seaBattle],
+  ["burning-ship", "season-one", burningShip],
+  ["masthead-dawn", "season-one", mastheadDawn],
+  ["sunken-galleon", "season-one", sunkenGalleon],
+  ["wreck-coast", "season-one", wreckCoast],
+  ["treasure-cave", "season-one", treasureCave],
+  ["pirate-tavern", "season-one", pirateTavern],
+  ["kraken-rising", "season-one", krakenRising],
+  ["ghost-ship", "season-one", ghostShip],
+  ["hidden-lagoon", "season-one", hiddenLagoon],
+  ["aurora-passage", "season-one", auroraPassage],
+  ["volcano-isle", "season-one", volcanoIsle],
+  ["lighthouse-reef", "season-one", lighthouseReef],
   ["aws", "aws", aws],
 ];

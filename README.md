@@ -1,8 +1,8 @@
 # ahoy
 
-Animated ascii art in your terminal: 124 pirate pieces in five packs, the original *pirate pack*, *pirate pixels* (pixel art in a few flat colours), *jolly rogers* (two dozen takes on the skull and crossbones), *pirate lore* (animated logos from the golden age of piracy) and *pirate scenes* (big painted halftone scenes), plus the AWS logo, just for fun. Browse them with a live preview, play one full screen, or leave a screensaver running.
+Animated ascii art in your terminal. **Season one (2026)** is eighteen painted pirate scenes: big halftone pictures, alive with moving water, weather and light, from `skull-island` to `kraken-rising`. There's the AWS logo too, just for fun. Browse them with a live preview, play one full screen, or leave a screensaver running.
 
-The pieces are built on [ascii.rest](https://github.com/bas3line/ascii), and its library of 200+ more pieces is a flag away: `--all`.
+On the way to the scenes ahoy grew a hundred-odd **prototypes**, pirate pixel art, jolly rogers and logos in terminal characters. They're still here, a key away: `p` in the picker, or `--prototypes`. The pieces are built on [ascii.rest](https://github.com/bas3line/ascii), and its library of 200+ more is a flag away: `--all`.
 
 ![The picker: a list of pieces, with the selected one playing beside it](docs/picker.png)
 
@@ -27,18 +27,19 @@ To uninstall, delete the binary: `rm ~/.local/bin/ahoy`.
 ## Use
 
 ```sh
-ahoy                             # pick a piece; the one under the cursor plays as you go
-ahoy kraken                      # play one full screen
-ahoy galleon pirate-flag aws     # play a few, ←/→ to move between them
-ahoy saver                       # screensaver: every piece, one after another
+ahoy                             # pick a scene; the one under the cursor plays as you go
+ahoy kraken-rising               # play one full screen
+ahoy ghost-ship burning-ship aws # play a few, ←/→ to move between them
+ahoy saver                       # screensaver: season one, one scene after another
 ahoy saver --shuffle -d 30       # in a random order, 30 seconds each
-ahoy saver galleon,kraken,aws    # just these
-ahoy saver pirate scenes --all   # the pirate pack and the library's scenes
-ahoy list                        # every piece, by group
-ahoy --all                       # the picker, with the ascii.rest library too
+ahoy saver skull-island,aws      # just these
+ahoy saver season-one rogers     # season one, and the jolly rogers from the prototypes
+ahoy list                        # what's listed, by group
+ahoy --prototypes                # the picker, with the prototypes too
+ahoy --all                       # and with the ascii.rest library
 ```
 
-A selection can name pieces (`galleon`), groups (`pirate`, `pixels`, `rogers`, `lore`, `voyages`, `aws`) or `all`, separated by spaces or commas. Pieces and groups from the [ascii.rest library](https://ascii.rest) (`donut`, `scenes`, `logos`, `distros`, ...) can be named too; with `--all` they're also listed in the picker, in `ahoy list` and under `all`.
+A selection can name pieces (`ghost-ship`), groups (`season-one`, `aws`, and the prototype packs `pirate`, `pixels`, `rogers` and `lore`, or all of those as `prototypes`) or `all`, which is whatever is listed, separated by spaces or commas. A piece or a group can be named whether or not it is listed. Pieces and groups from the [ascii.rest library](https://ascii.rest) (`donut`, `scenes`, `logos`, `distros`, ...) can be named too; with `--all` they're also listed in the picker, in `ahoy list` and under `all`.
 
 The screensaver shows no text unless you press a key, and puts each piece somewhere different on the screen, so nothing burns in.
 
@@ -51,6 +52,7 @@ The screensaver shows no text unless you press a key, and puts each piece somewh
 | `enter` | play the piece and the ones listed with it | |
 | `/` | search names and descriptions | |
 | `x` | mark a piece for the screensaver | |
+| `p` | show the prototypes, or hide them again | |
 | `s` | screensaver over the marked pieces, or everything listed | |
 | `←` `→` | | previous, next |
 | `space` | pause the preview | pause |
@@ -66,6 +68,7 @@ The screensaver shows no text unless you press a key, and puts each piece somewh
 | `-s`, `--shuffle` | screensaver in a random order |
 | `-m`, `--mono` | coloured pieces in the terminal's own colour |
 | `-l`, `--light` | for a light terminal |
+| `-p`, `--prototypes` | list ahoy's prototypes too |
 | `-a`, `--all` | list the ascii.rest library too |
 | `-o`, `--out <folder>` | where `e` saves a paused frame (default: the folder you are in) |
 
@@ -79,16 +82,24 @@ Pause a piece with `space`, step to the frame you want with `,` and `.`, and pre
 
 There are contact sheets of every piece in [`docs/sheets`](docs/sheets).
 
+### Season one (2026)
+
+**season one** (`season-one`): `skull-island`, `storm-at-sea`, `port-royal`, `pirate-cove`, `glowing-wake`, `sea-battle`, `burning-ship`, `masthead-dawn`, `sunken-galleon`, `wreck-coast`, `treasure-cave`, `pirate-tavern`, `kraken-rising`, `ghost-ship`, `hidden-lagoon`, `aurora-passage`, `volcano-isle`, `lighthouse-reef`. Painted scenes, 200×100, in the style of ascii.rest's own: each cell is shaded in colour and drawn as a halftone dot, with the water, the weather and the light moving. In a terminal they're shrunk to fit, so they look best in a big window, or full screen in the macOS screensaver.
+
+**just for fun** (`aws`): `aws`, the AWS wordmark over its smile.
+
+### Prototypes
+
+The packs made on the way to season one. They aren't listed until you ask: `p` in the picker, `--prototypes` on the command line, or name one (`ahoy doubloon`, `ahoy saver rogers`).
+
+**the pirate pack** (`pirate`):
+`galleon`, `pirate-flag`, `jolly-roger`, `kraken`, `parrot`, `ships-wheel`, `treasure-map`, `treasure-chest`, `anchor`, `ahoy` and `pirate-heart`, each in a different style: dense ascii fill, box-drawing line art, old-school slashes, shaded blocks, procedural shading. They live in [`src/pieces`](src/pieces) and follow the [ascii.rest piece contract](https://github.com/bas3line/ascii/blob/main/CONTRIBUTING.md), so any of them could be contributed upstream.
+
 **pirate pixels** (`pixels`): `sea-dog`, `sea-dog-2`, `doubloon`, `lit-fuse`, `dead-eye`, `gold-tooth`, `skull-candle`, `fish-bones`, `crossed-cutlasses`, `dagger`, `cannon`, `skeleton-key`, `tricorn`, `rum-bottle`, `x-marks-the-spot`, `desert-island`, `sloop`, `jolly-boat`, `ship-in-a-bottle`, `walk-the-plank`, `shark-fin`, `whale-tail`, `sea-serpent`, `octopus`, `pirate-crab`, `seagull`, `pirate-captain`, `man-of-war`, `ships-monkey`, `bilge-rat`, `anglerfish`, `mermaid`, `kraken-arms`, `flintlock`, `gold-hoard`, `brass-compass`, `grappling-hook`, `oyster-pearl`. Pixel art drawn in half blocks, two square pixels a cell, each pixel drawn on its own, in a few flat colours on black.
 
 **jolly rogers** (`rogers`): `skull-and-crossbones`, `jack-rackham`, `cutlass-bite`, `pierced-skull`, `crowned-skull`, `fire-roger`, `red-roger`, `ghost-roger`, `laughing-roger`, `rose-roger`, `profile-roger`, `winged-skull`, `emanuel-wynne`, `henry-every`, `condent-pennant`, `gold-roger`, `flintlock-roger`, `anchor-roger`, `shovel-roger`, `storm-roger`, `ice-roger`, `snake-roger`, `spider-roger`, `drowned-roger`. Two dozen takes on the skull and crossbones, or crossed cutlasses, drawn the same way.
 
 **pirate lore** (`lore`): `blackbeard`, `calico-jack`, `queen-annes-revenge`, `black-bart`, `pieces-of-eight`, `no-prey-no-pay`, `tortuga`, `hourglass`, `black-spot`, `flying-dutchman`, `compass-rose`, `wanted-poster`, `eight-bells`, `stede-bonnet`, `ghost-captain`, `cutlass`, `broadside`, `dead-mans-chest`, `grog`, `davy-jones-locker`, `spyglass`, `iron-hook`, `skull-moon`, `edward-low`, `thomas-tew`, `ships-lantern`, `three-skulls`, `articles`, `powder-keg`, `joli-rouge`, `crossed-flintlocks`, `crows-nest`, `message-in-a-bottle`. Animated logos in terminal character art on black, most of them historical pirate flags and the stuff of pirate legend.
-
-**pirate scenes** (`voyages`): `skull-island`, `storm-at-sea`, `port-royal`, `pirate-cove`, `glowing-wake`, `sea-battle`, `burning-ship`, `masthead-dawn`, `sunken-galleon`, `wreck-coast`, `treasure-cave`, `pirate-tavern`, `kraken-rising`, `ghost-ship`, `hidden-lagoon`, `aurora-passage`, `volcano-isle`, `lighthouse-reef`. 200×100 halftone scenes in colour, in the style of ascii.rest's own; in a terminal they're shrunk to fit, so they look best in a big window, or full screen in the macOS screensaver.
-
-**the pirate pack** (`pirate`):
-`galleon`, `pirate-flag`, `jolly-roger`, `kraken`, `parrot`, `ships-wheel`, `treasure-map`, `treasure-chest`, `anchor`, `ahoy` and `pirate-heart`, each in a different style: dense ascii fill, box-drawing line art, old-school slashes, shaded blocks, procedural shading. They live in [`src/pieces`](src/pieces) and follow the [ascii.rest piece contract](https://github.com/bas3line/ascii/blob/main/CONTRIBUTING.md), so any of them could be contributed upstream.
 
 ## Develop
 

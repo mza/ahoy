@@ -103,7 +103,7 @@ For objects with real 3D form, render from geometry every frame with a density r
 
 Box drawing and plain ASCII for crisp structures: `articles` (a scroll whose text types itself, then a wax seal), `compass-rose`, `queen-annes-revenge`'s roundel, `dead-mans-chest`.
 
-### Painted halftone scenes (`voyages`)
+### Painted halftone scenes (`season-one`)
 
 Copied from ascii.rest's own scenes (`kyoto-dusk.ts`, `alpine-dawn.ts`, `lantern-lake.ts`; read them first): 200×100 square cells; each cell shaded in colour (procedural geometry, heightfields, raymarching for water and terrain, all precomputed), then drawn as an ordered-dithered dot sized by brightness in the nearest palette colour. Frames re-tint and move only what changes.
 
@@ -133,7 +133,7 @@ Most pieces were made by parallel sub-agents, two pieces each, then reviewed tog
 ## Adding a piece to ahoy
 
 1. Put `src/pieces/<slug>.ts` in place, and check it: `node tools/art/check.mjs <slug>`.
-2. Import it in [`src/own.ts`](../src/own.ts) and add it to its group: `pirate`, `pixels`, `rogers`, `lore` or `voyages`. The terminal app and the screensaver both play that list.
-3. `npm run typecheck`, then `node src/cli.ts <slug>` and `./dist/ahoy` after `npm run build`. Check that `./dist/ahoy all | grep '\\u[0-9a-f]\{4\}'` prints nothing.
+2. Import it in [`src/own.ts`](../src/own.ts) and add it to its group: `season-one` for a scene, or one of the prototype packs, `pirate`, `pixels`, `rogers` or `lore`, which are listed only with `--prototypes`. The terminal app and the screensaver both play that list.
+3. `npm run typecheck`, then `node src/cli.ts <slug>` and `./dist/ahoy` after `npm run build`. Check that `./dist/ahoy all --prototypes | grep '\\u[0-9a-f]\{4\}'` prints nothing.
 4. `npm run saver` rebuilds `macos/build/Ahoy.saver`; snapshot it to check.
 5. Update the piece lists in the README, and regenerate the contact sheets in `docs/sheets/` if you like: `python3 tools/art/contact.py docs/sheets/contact-2.png 6 <slug>...`, one sheet a group, numbered in the order the picker lists them.

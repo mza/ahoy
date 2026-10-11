@@ -17,10 +17,10 @@ jobs:
       - run: npm ci
       - run: npm run typecheck
       # every piece's first frame, through the CLI as a pipe sees it
-      - run: node src/cli.ts all > /dev/null
+      - run: node src/cli.ts all --prototypes > /dev/null
       - run: bun build src/cli.ts --compile --minify --outfile dist/ahoy
-      - run: ./dist/ahoy --version && ./dist/ahoy list > /dev/null
+      - run: ./dist/ahoy --version && ./dist/ahoy list --prototypes > /dev/null
       # Bun escapes non-ascii in String.raw templates, which then print as \uXXXX: every piece must come out as drawn
       - name: every piece prints as drawn from the binary
-        run: "! ./dist/ahoy all --all | grep -n '\\\\u[0-9a-f]\\{4\\}'"
+        run: "! ./dist/ahoy all --all --prototypes | grep -n '\\\\u[0-9a-f]\\{4\\}'"
       - run: sh -n install.sh

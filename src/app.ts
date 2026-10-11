@@ -12,7 +12,7 @@
 import process from "node:process";
 import { homedir } from "node:os";
 import { basename, dirname, join, relative } from "node:path";
-import { heading, OWN, type Entry } from "./catalog.ts";
+import { heading, listed, OWN, PROTOTYPES, type Entry, type Shown } from "./catalog.ts";
 import { save } from "./export.ts";
 import { Screen, session, type Key } from "./screen.ts";
 import { Stage, type Look } from "./stage.ts";
@@ -92,11 +92,16 @@ export class App {
   private notice = { text: "", until: 0 };
   private done!: () => void;
 
+  // every piece there is, what of it is listed, and so the pieces the picker lists
+  private all: Entry[];
+  private shown: Shown;
   private entries: Entry[];
   private settings: Settings;
 
-  constructor(entries: Entry[], settings: Settings) {
-    this.entries = entries;
+  constructor(all: Entry[], shown: Shown, settings: Settings) {
+    this.all = all;
+    this.shown = shown;
+    this.entries = listed(all, shown);
     this.settings = settings;
     this.look = { mono: settings.mono, light: settings.light };
   }
@@ -200,6 +205,9 @@ export class App {
         screen.text(3, y, row.entry.slug, on ? ACCENT : -1, -1, LW - 5);
       }
     }
+    // the switch for the prototypes, in the bottom edge of the list
+    if (this.all.some((e) => PROTOTYPES.includes(e.pack)))
+      screen.text(2, top + h - 1, this.shown.prototypes ? " p · hide prototypes " : " p · show prototypes ", this.shown.prototypes ? ACCENT : DIM, -1, LW - 4);
     if (rows.length > inner) {
       // a scroll mark on the right edge
       const pos = top + 1 + Math.round(((inner - 1) * this.scroll) / Math.max(1, rows.length - inner));
@@ -232,7 +240,7 @@ export class App {
     const marks = this.marked.size ? ` (${this.marked.size})` : "";
     const hint = this.searching
       ? "type to filter · enter done · esc clear"
-      : `↑↓ move · enter play · space pause · x mark${marks} · s screensaver · / search · m mono · t light/dark · q quit`;
+      : `↑↓ move · enter play · space pause · x mark${marks} · s screensaver · / search · p prototypes · m mono · t light/dark · q quit`;
     if (this.clock < this.notice.until) screen.text(1, H - 1, this.notice.text, ACCENT, -1, W - 2);
     else screen.text(1, H - 1, hint, DIM, -1, W - 2);
   }
@@ -283,7 +291,14 @@ export class App {
     else if (c === "/") (this.searching = true), (this.filter = "");
     else if (c === "m") this.look = { ...this.look, mono: !this.look.mono };
     else if (c === "t") this.look = { ...this.look, light: !this.look.light };
-    else if (c === " ") this.previewPaused = !this.previewPaused;
+    else if (c === "p") {
+      // the prototypes shown or hidden, the cursor staying on its piece if that is still listed
+      this.shown = { ...this.shown, prototypes: !this.shown.prototypes };
+      this.entries = listed(this.all, this.shown);
+      const at = this.visible().indexOf(entry!);
+      this.sel = Math.max(0, at);
+      for (const slug of this.marked) if (!this.entries.some((e) => e.slug === slug)) this.marked.delete(slug);
+    } else if (c === " ") this.previewPaused = !this.previewPaused;
     else if ((c === "," || c === ".") && entry) (this.previewPaused = true), this.previewOf(entry).step(c === "," ? -1 : 1);
     else if (c === "e" && entry && this.previewPaused) this.export(this.previewOf(entry));
     else if (c === "x" && entry) {

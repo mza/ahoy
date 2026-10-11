@@ -9,12 +9,16 @@
  *                             or "" for a piece in one ink
  *   ahoy.close(handle)
  *
- * The pieces are ahoy's own, from src/own.ts, in the order the picker lists them.
+ * The pieces are the ones ahoy lists by default, season one and the logo, from
+ * src/own.ts, in the order the picker lists them; the prototypes are left out.
  */
 import type { Frame, Piece } from "../../src/types.ts";
-import { OWN_PIECES } from "../../src/own.ts";
+import { OWN_PIECES, PACKS } from "../../src/own.ts";
 
-const PIECES: [string, Piece][] = OWN_PIECES.map(([slug, , piece]) => [slug, piece]);
+const LISTED = PACKS.filter(([, , prototype]) => !prototype).map(([pack]) => pack);
+const PIECES: [string, Piece][] = OWN_PIECES.filter(([, pack]) => LISTED.includes(pack))
+  .sort((a, b) => LISTED.indexOf(a[1]) - LISTED.indexOf(b[1]))
+  .map(([slug, , piece]) => [slug, piece]);
 
 interface Playing {
   frame: Frame;

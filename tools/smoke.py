@@ -53,15 +53,17 @@ def run(job):
 
 
 if __name__ == "__main__":
-    listing = subprocess.run(CMD + ["list"], capture_output=True, text=True, check=True).stdout
+    # every piece of ahoy's own, the prototypes with them: any can be played by name, listed or not
+    listing = subprocess.run(CMD + ["list", "--prototypes"], capture_output=True, text=True, check=True).stdout
     slugs = [line.split()[0] for line in listing.splitlines() if line.startswith("  ")]
     jobs = [(s, [s], c, r, [b" ", b".", b",", b"m", b"t", b"q"], 0.4) for s in slugs for c, r in [(200, 60), (80, 24), (24, 8)]]
     sizes = [(160, 50), (80, 24), (30, 8)]
-    picker = [b"j", b"j", b"G", b"g", b"t", b"t", b"m", b"/", b"skull", b"\r", b"x", b"\x1b[6~", b"\r", b"\x1b[C", b"\x1b[D", b"q", b"q"]
+    picker = [b"j", b"j", b"p", b"G", b"g", b"p", b"p", b"t", b"t", b"m", b"/", b"skull", b"\r", b"x", b"\x1b[6~", b"\r", b"\x1b[C", b"\x1b[D", b"q", b"q"]
     jobs += [("picker", [], c, r, picker, 0.8) for c, r in sizes]
     jobs += [("picker --all", ["--all"], c, r, [b"G", b"k", b"\r", b"q", b"q"], 0.8) for c, r in sizes]
     jobs += [("saver", ["saver", "--shuffle", "-d", "1"], c, r, [b"\x1b[C", b" ", b" ", b"q"], 2.5) for c, r in sizes]
     jobs += [("saver pixels --mono", ["saver", "pixels", "-d", "1", "--mono"], c, r, [b"q"], 2.5) for c, r in sizes]
+    jobs += [("picker --prototypes", ["--prototypes"], c, r, [b"G", b"p", b"j", b"\r", b"q", b"q"], 0.8) for c, r in sizes]
     jobs += [("saver lore --light", ["saver", "lore", "-d", "1", "--light"], c, r, [b"q"], 2.5) for c, r in sizes]
     # a frame saved from a pause: a piece in blocks, one in letters, one in box drawing and a scene
     saved = ["doubloon", "calico-jack", "treasure-chest", "skull-island"]

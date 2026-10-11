@@ -34,7 +34,7 @@ jobs:
       - run: bun build src/cli.ts --compile --minify --target=bun-${{ matrix.target }} --outfile out/ahoy
       - name: smoke test where it runs
         if: matrix.target == 'darwin-arm64' || matrix.target == 'linux-x64'
-        run: out/ahoy --version && out/ahoy list > /dev/null && ! out/ahoy all --all | grep -n '\\u[0-9a-f]\{4\}'
+        run: out/ahoy --version && out/ahoy list --prototypes > /dev/null && ! out/ahoy all --all --prototypes | grep -n '\\u[0-9a-f]\{4\}'
       - run: tar -czf ahoy-${{ matrix.target }}.tar.gz -C out ahoy
       - uses: actions/upload-artifact@v4
         with:
