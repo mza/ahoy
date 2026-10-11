@@ -32,11 +32,13 @@ const HELP = `ahoy ${pkg.version}: ascii art in your terminal
   -m, --mono                coloured pieces in the terminal's own colour
   -l, --light               for a light terminal
   -a, --all                 list the ascii.rest library too
+  -o, --out <folder>        where e saves a paused frame (default: this folder)
   -h, --help                this help
   -v, --version             the version
 
   keys: ←/→ skip · space pause · ,/. a frame back or on · m mono · t light/dark
         q back or quit · in the picker, x marks pieces for s, the screensaver
+        e, when paused, saves the frame as a 1500x1500 PNG (transparent) and JPEG
 
   ahoy saver
   ahoy saver --shuffle --dwell 10
@@ -56,6 +58,7 @@ async function main() {
       mono: { type: "boolean", short: "m" },
       light: { type: "boolean", short: "l" },
       all: { type: "boolean", short: "a" },
+      out: { type: "string", short: "o" },
       help: { type: "boolean", short: "h" },
       version: { type: "boolean", short: "v" },
     },
@@ -64,7 +67,7 @@ async function main() {
   if (values.version) return void console.log(pkg.version);
   const dwell = values.dwell === undefined ? 15 : Number(values.dwell);
   if (!(dwell > 0)) throw new Usage(`--dwell takes a number of seconds above 0, not "${values.dwell}"`);
-  const settings = { dwell, shuffle: !!values.shuffle, mono: !!values.mono, light: !!values.light };
+  const settings = { dwell, shuffle: !!values.shuffle, mono: !!values.mono, light: !!values.light, out: values.out ?? "." };
 
   const everything = await catalog();
   const entries = listed(everything, !!values.all);

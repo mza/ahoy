@@ -1,8 +1,9 @@
 # python3 tools/smoke.py [command...]: plays every piece, the picker and the screensaver in pretend terminals of
-# several sizes, pressing keys, and fails if anything crashes, hangs, or prints an error or a \uXXXX escape.
+# several sizes, pressing keys, and fails if anything crashes, hangs, or prints an error or a \uXXXX escape. It also
+# pauses a few pieces and saves their frames, and checks the PNG and JPEG that come out.
 # The command defaults to `node src/cli.ts`; pass `./dist/ahoy` to test the binary. Runs are made side by side and
 # each is killed if it outlives its time, so the whole thing takes about a minute and always ends.
-import fcntl, os, pty, re, select, signal, struct, subprocess, sys, termios, time
+import fcntl, os, pty, re, select, shutil, signal, struct, subprocess, sys, tempfile, termios, time
 from multiprocessing import Pool
 
 CMD = sys.argv[1:] or ["node", "src/cli.ts"]
@@ -62,9 +63,25 @@ if __name__ == "__main__":
     jobs += [("saver", ["saver", "--shuffle", "-d", "1"], c, r, [b"\x1b[C", b" ", b" ", b"q"], 2.5) for c, r in sizes]
     jobs += [("saver pixels --mono", ["saver", "pixels", "-d", "1", "--mono"], c, r, [b"q"], 2.5) for c, r in sizes]
     jobs += [("saver lore --light", ["saver", "lore", "-d", "1", "--light"], c, r, [b"q"], 2.5) for c, r in sizes]
+    # a frame saved from a pause: a piece in blocks, one in letters, one in box drawing and a scene
+    saved = ["doubloon", "calico-jack", "treasure-chest", "skull-island"]
+    out = tempfile.mkdtemp(prefix="ahoy-smoke-")
+    jobs += [(f"export {s}", [s, "-o", out], 100, 30, [b" ", b".", b"e", b"", b"", b"", b"", b"", b"", b"q"], 0.6) for s in saved if s in slugs]
     start = time.time()
     with Pool(min(16, (os.cpu_count() or 4) * 2)) as pool:
         results = pool.map(run, jobs, chunksize=1)
+    for s in saved:
+        if s not in slugs:
+            continue
+        found = sorted(f for f in os.listdir(out) if f.startswith(f"ahoy-{s}-"))
+        png = next((open(os.path.join(out, f), "rb").read() for f in found if f.endswith(".png")), b"")
+        jpg = next((open(os.path.join(out, f), "rb").read() for f in found if f.endswith(".jpg")), b"")
+        # a PNG says its size and that it has alpha in its first chunk; a JPEG says its size after the marker ff c0
+        at = jpg.find(b"\xff\xc0")
+        ok = png[:8] == b"\x89PNG\r\n\x1a\n" and struct.unpack(">IIBB", png[16:26]) == (1500, 1500, 8, 6) and len(png) > 2000
+        ok = ok and jpg[:2] == b"\xff\xd8" and jpg[-2:] == b"\xff\xd9" and at > 0 and struct.unpack(">HH", jpg[at + 5:at + 9]) == (1500, 1500)
+        results.append((f"export {s} files", "" if ok else f"bad or missing files: {found}"))
+    shutil.rmtree(out, ignore_errors=True)
     failed = [(what, why) for what, why in results if why]
     for what, why in failed:
         print(f"FAIL {what}: {why}")

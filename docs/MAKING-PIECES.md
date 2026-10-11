@@ -136,4 +136,4 @@ Most pieces were made by parallel sub-agents, two pieces each, then reviewed tog
 2. Import it in [`src/own.ts`](../src/own.ts) and add it to its group: `pirate`, `pixels`, `rogers`, `lore` or `voyages`. The terminal app and the screensaver both play that list.
 3. `npm run typecheck`, then `node src/cli.ts <slug>` and `./dist/ahoy` after `npm run build`. Check that `./dist/ahoy all | grep '\\u[0-9a-f]\{4\}'` prints nothing.
 4. `npm run saver` rebuilds `macos/build/Ahoy.saver`; snapshot it to check.
-5. Update the piece lists in the README, and regenerate the contact sheets in `docs/sheets/` if you like.
+5. Update the piece lists in the README, and regenerate the contact sheets in `docs/sheets/` if you like: `python3 tools/art/contact.py docs/sheets/contact-2.png 6 <slug>...`, one sheet a group, numbered in the order the picker lists them.

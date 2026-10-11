@@ -10,7 +10,10 @@
  * for hours.
  */
 import process from "node:process";
+import { homedir } from "node:os";
+import { basename, dirname, join, relative } from "node:path";
 import { heading, OWN, type Entry } from "./catalog.ts";
+import { save } from "./export.ts";
 import { Screen, session, type Key } from "./screen.ts";
 import { Stage, type Look } from "./stage.ts";
 
@@ -18,6 +21,8 @@ export interface Settings extends Look {
   /** Seconds a screensaver shows each piece. */
   dwell: number;
   shuffle: boolean;
+  /** Where a paused frame is saved as a picture. */
+  out: string;
 }
 
 const ACCENT = 0xff9900;
@@ -31,6 +36,8 @@ const FPS = 30;
 const HUD = 3;
 // Seconds one piece takes to dissolve into the next.
 const FADE = 0.7;
+// Seconds the word that a frame was saved, or could not be, stays up.
+const NOTICE = 5;
 
 type Row = { head: string } | { entry: Entry };
 
@@ -81,6 +88,8 @@ export class App {
   // the slugs marked for a screensaver
   private marked = new Set<string>();
   private clock = 0;
+  // what the last save of a frame came to, and when it stops being shown
+  private notice = { text: "", until: 0 };
   private done!: () => void;
 
   private entries: Entry[];
@@ -208,7 +217,7 @@ export class App {
       preview.tick(dt);
       preview.draw(screen, px + 2, top + 1, pw - 4, h - 3);
       const { meta } = entry.piece;
-      const size = this.previewPaused ? `paused · frame ${preview.frameNo} · ,/. step` : `${meta.cols}x${meta.rows}`;
+      const size = this.previewPaused ? `paused · frame ${preview.frameNo} · ,/. step · e export` : `${meta.cols}x${meta.rows}`;
       const n = screen.text(px + 2, top + h - 2, meta.name, ACCENT, -1, pw - 4);
       screen.text(px + 2 + n, top + h - 2, ` · ${meta.note}`, DIM, -1, pw - 6 - n - size.length);
       screen.text(px + pw - 2 - size.length, top + h - 2, size, FRAME);
@@ -224,7 +233,21 @@ export class App {
     const hint = this.searching
       ? "type to filter · enter done · esc clear"
       : `↑↓ move · enter play · space pause · x mark${marks} · s screensaver · / search · m mono · t light/dark · q quit`;
-    screen.text(1, H - 1, hint, DIM, -1, W - 2);
+    if (this.clock < this.notice.until) screen.text(1, H - 1, this.notice.text, ACCENT, -1, W - 2);
+    else screen.text(1, H - 1, hint, DIM, -1, W - 2);
+  }
+
+  // Saves the frame a paused piece is on as a PNG and a JPEG, and says where, or why not.
+  private export(stage: Stage) {
+    try {
+      const [png] = save(stage.entry, stage.look, stage.frameNo, this.settings.out);
+      // the name first, since a long folder is cut short: in this folder, or under home, or wherever it is
+      const dir = dirname(png), here = relative(".", dir), home = relative(homedir(), dir);
+      const where = !here ? "this folder" : !here.startsWith("..") ? here : !home.startsWith("..") ? join("~", home) : dir;
+      this.notice = { text: `saved ${basename(png)} and .jpg in ${where}`, until: this.clock + NOTICE };
+    } catch (e) {
+      this.notice = { text: `could not save the frame: ${(e as Error).message}`, until: this.clock + NOTICE };
+    }
   }
 
   // The preview of the piece under the cursor, made again when the cursor or the look moves.
@@ -262,6 +285,7 @@ export class App {
     else if (c === "t") this.look = { ...this.look, light: !this.look.light };
     else if (c === " ") this.previewPaused = !this.previewPaused;
     else if ((c === "," || c === ".") && entry) (this.previewPaused = true), this.previewOf(entry).step(c === "," ? -1 : 1);
+    else if (c === "e" && entry && this.previewPaused) this.export(this.previewOf(entry));
     else if (c === "x" && entry) {
       if (!this.marked.delete(entry.slug)) this.marked.add(entry.slug);
       this.sel++;
@@ -318,10 +342,13 @@ export class App {
       if (p.list.length > 1) x += screen.text(x, H - 1, `${p.index + 1}/${p.list.length}  `, DIM);
       x += screen.text(x, H - 1, meta.name, ACCENT);
       const keys = p.stage.paused
-        ? `paused · frame ${p.stage.frameNo} · ,/. step · ${p.list.length > 1 ? "←→ skip · " : ""}space play · q ${p.back ? "back" : "quit"}`
+        ? `paused · frame ${p.stage.frameNo} · ,/. step · e export · ${p.list.length > 1 ? "←→ skip · " : ""}space play · q ${p.back ? "back" : "quit"}`
         : `${p.list.length > 1 ? "←→ skip · " : ""}space pause · q ${p.back ? "back" : "quit"}`;
-      screen.text(x, H - 1, ` · ${meta.note}`, DIM, -1, W - x - keys.length - 3);
-      screen.text(W - keys.length - 1, H - 1, keys, DIM);
+      if (this.clock < this.notice.until) screen.text(x, H - 1, ` · ${this.notice.text}`, ACCENT, -1, W - x - 1);
+      else {
+        screen.text(x, H - 1, ` · ${meta.note}`, DIM, -1, W - x - keys.length - 3);
+        screen.text(W - keys.length - 1, H - 1, keys, DIM);
+      }
     }
   }
 
@@ -333,6 +360,7 @@ export class App {
     else if (key === "left" || c === "p" || c === "h") this.go(-1);
     else if (c === " ") p.stage.paused = !p.stage.paused;
     else if (c === "," || c === ".") (p.stage.paused = true), p.stage.step(c === "," ? -1 : 1);
+    else if (c === "e" && p.stage.paused) this.export(p.stage);
     else if (c === "m" || c === "t") {
       this.look = c === "m" ? { ...this.look, mono: !this.look.mono } : { ...this.look, light: !this.look.light };
       const { t, paused } = p.stage;

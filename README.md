@@ -55,6 +55,7 @@ The screensaver shows no text unless you press a key, and puts each piece somewh
 | `←` `→` | | previous, next |
 | `space` | pause the preview | pause |
 | `,` `.` | a frame back or on (pauses) | same |
+| `e` | when paused, save the frame as pictures | same |
 | `m` | coloured pieces in one colour | same |
 | `t` | colours for a light or dark terminal | same |
 | `q` / `esc` | quit | back to the picker, or quit |
@@ -66,10 +67,17 @@ The screensaver shows no text unless you press a key, and puts each piece somewh
 | `-m`, `--mono` | coloured pieces in the terminal's own colour |
 | `-l`, `--light` | for a light terminal |
 | `-a`, `--all` | list the ascii.rest library too |
+| `-o`, `--out <folder>` | where `e` saves a paused frame (default: the folder you are in) |
 
 Most pieces are up to 80×32, and the scenes are shrunk to fit. In a smaller terminal, pieces drawn in blocks or dense fill are shrunk to fit, and line art is cropped to its middle rather than torn. Coloured pieces need a terminal with truecolor (iTerm2, Ghostty, WezTerm, kitty, Alacritty, Windows Terminal); elsewhere, use `--mono`. When the output isn't a terminal, `ahoy <piece>` prints the piece's first frame as plain text: `ahoy galleon > galleon.txt`.
 
+### Saving a frame
+
+Pause a piece with `space`, step to the frame you want with `,` and `.`, and press `e`. ahoy saves that frame twice, 1500 pixels square: `ahoy-<piece>-<frame>.png`, with nothing behind the piece, and `ahoy-<piece>-<frame>.jpg`, on the piece's own ground. It is the piece at its full size, as large as whole pixels allow, whatever the size of your terminal, in the look you were watching it in (`m` for one ink, `t` for a light page). Letters are drawn in a small bitmap font of ahoy's own, since there is no terminal font in a picture.
+
 ## The pieces
+
+There are contact sheets of every piece in [`docs/sheets`](docs/sheets).
 
 **pirate pixels** (`pixels`): `sea-dog`, `doubloon`, `lit-fuse`, `dead-eye`, `gold-tooth`, `skull-candle`, `fish-bones`, `crossed-cutlasses`, `dagger`, `cannon`, `skeleton-key`, `tricorn`, `rum-bottle`, `x-marks-the-spot`, `desert-island`, `sloop`, `jolly-boat`, `ship-in-a-bottle`, `walk-the-plank`, `shark-fin`, `whale-tail`, `sea-serpent`, `octopus`, `pirate-crab`, `seagull`, `pirate-captain`, `man-of-war`, `ships-monkey`, `bilge-rat`, `anglerfish`, `mermaid`, `kraken-arms`, `flintlock`, `gold-hoard`, `brass-compass`, `grappling-hook`, `oyster-pearl`. Pixel art drawn in half blocks, two square pixels a cell, each pixel drawn on its own, in a few flat colours on black.
 
