@@ -15,7 +15,7 @@ import { basename, dirname, join, relative } from "node:path";
 import { heading, listed, OWN, PROTOTYPES, type Entry, type Shown } from "./catalog.ts";
 import { save } from "./export.ts";
 import { Screen, session, type Key } from "./screen.ts";
-import { Stage, type Look } from "./stage.ts";
+import { SCENES, Stage, type Look } from "./stage.ts";
 
 export interface Settings extends Look {
   /** Seconds a screensaver shows each piece. */
@@ -103,7 +103,7 @@ export class App {
     this.shown = shown;
     this.entries = listed(all, shown);
     this.settings = settings;
-    this.look = { mono: settings.mono, light: settings.light };
+    this.look = { mono: settings.mono, light: settings.light, scenes: settings.scenes };
   }
 
   /** The picker, until q. */
@@ -245,6 +245,14 @@ export class App {
     else screen.text(1, H - 1, hint, DIM, -1, W - 2);
   }
 
+  // The next way of drawing a scene, and a word to say which.
+  private scenes() {
+    const scenes = SCENES[(SCENES.indexOf(this.look.scenes) + 1) % SCENES.length];
+    this.look = { ...this.look, scenes };
+    const what = { crisp: "crisp, a cell to half a block", dots: "braille dots", soft: "soft tones" }[scenes];
+    this.notice = { text: `scenes drawn ${what} · d for the next`, until: this.clock + NOTICE };
+  }
+
   // Saves the frame a paused piece is on as a PNG and a JPEG, and says where, or why not.
   private export(stage: Stage) {
     try {
@@ -291,6 +299,7 @@ export class App {
     else if (c === "/") (this.searching = true), (this.filter = "");
     else if (c === "m") this.look = { ...this.look, mono: !this.look.mono };
     else if (c === "t") this.look = { ...this.look, light: !this.look.light };
+    else if (c === "d") this.scenes();
     else if (c === "p") {
       // the prototypes shown or hidden, the cursor staying on its piece if that is still listed
       this.shown = { ...this.shown, prototypes: !this.shown.prototypes };
@@ -376,8 +385,9 @@ export class App {
     else if (c === " ") p.stage.paused = !p.stage.paused;
     else if (c === "," || c === ".") (p.stage.paused = true), p.stage.step(c === "," ? -1 : 1);
     else if (c === "e" && p.stage.paused) this.export(p.stage);
-    else if (c === "m" || c === "t") {
-      this.look = c === "m" ? { ...this.look, mono: !this.look.mono } : { ...this.look, light: !this.look.light };
+    else if (c === "m" || c === "t" || c === "d") {
+      if (c === "d") this.scenes();
+      else this.look = c === "m" ? { ...this.look, mono: !this.look.mono } : { ...this.look, light: !this.look.light };
       const { t, paused } = p.stage;
       p.stage = new Stage(p.list[p.index], this.look);
       Object.assign(p.stage, { t, paused });

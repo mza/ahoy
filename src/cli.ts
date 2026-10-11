@@ -13,6 +13,7 @@ import process from "node:process";
 import { parseArgs } from "node:util";
 import pkg from "../package.json" with { type: "json" };
 import { App, still, tty } from "./app.ts";
+import { SCENES, type Scenes } from "./stage.ts";
 import { catalog, DEFAULT_SAVER, listed, OWN, PROTOTYPES, select } from "./catalog.ts";
 
 const HELP = `ahoy ${pkg.version}: ascii art in your terminal
@@ -38,10 +39,13 @@ const HELP = `ahoy ${pkg.version}: ascii art in your terminal
   -p, --prototypes          list ahoy's prototypes too (p in the picker)
   -a, --all                 list the ascii.rest library too
   -o, --out <folder>        where e saves a paused frame (default: this folder)
+      --scenes <how>        how a scene is drawn: crisp (the default), dots or soft;
+                            d changes it as you watch
   -h, --help                this help
   -v, --version             the version
 
   keys: ←/→ skip · space pause · ,/. a frame back or on · m mono · t light/dark
+        d the next way of drawing a scene (crisp, dots, soft)
         q back or quit · in the picker, x marks pieces for s, the screensaver
         e, when paused, saves the frame as a 1500x1500 PNG (transparent) and JPEG
 
@@ -65,6 +69,7 @@ async function main() {
       all: { type: "boolean", short: "a" },
       prototypes: { type: "boolean", short: "p" },
       out: { type: "string", short: "o" },
+      scenes: { type: "string" },
       help: { type: "boolean", short: "h" },
       version: { type: "boolean", short: "v" },
     },
@@ -73,7 +78,9 @@ async function main() {
   if (values.version) return void console.log(pkg.version);
   const dwell = values.dwell === undefined ? 15 : Number(values.dwell);
   if (!(dwell > 0)) throw new Usage(`--dwell takes a number of seconds above 0, not "${values.dwell}"`);
-  const settings = { dwell, shuffle: !!values.shuffle, mono: !!values.mono, light: !!values.light, out: values.out ?? "." };
+  const scenes = (values.scenes ?? "crisp") as Scenes;
+  if (!SCENES.includes(scenes)) throw new Usage(`--scenes takes ${SCENES.join(", ")}, not "${values.scenes}"`);
+  const settings = { dwell, shuffle: !!values.shuffle, mono: !!values.mono, light: !!values.light, scenes, out: values.out ?? "." };
 
   const everything = await catalog();
   const shown = { prototypes: !!values.prototypes, library: !!values.all };
