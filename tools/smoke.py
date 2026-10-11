@@ -52,6 +52,34 @@ def run(job):
     return f"{name} at {cols}x{rows}", why
 
 
+def browser():
+    """The screensaver served to a browser, with no browser opened: its page, a piece and a frame of it, and its end."""
+    import urllib.request
+    env = dict(os.environ, AHOY_BROWSER="none")
+    p = subprocess.Popen(CMD + ["saver", "--browser", "-d", "1"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, env=env)
+    try:
+        at = re.search(r"http://127\.0\.0\.1:\d+/", p.stdout.readline())
+        if not at:
+            return "it did not say where the page is"
+        url = at.group(0)
+        if "<canvas" not in urllib.request.urlopen(url, timeout=5).read().decode():
+            return "the page has no canvas"
+        events = urllib.request.urlopen(url + "events", timeout=5)
+        seen = b""
+        while b"event: frame" not in seen and len(seen) < 400000:
+            seen += events.read(4096)
+        events.close()
+        if b"event: piece" not in seen or b"event: frame" not in seen:
+            return "no piece or no frame was sent"
+        urllib.request.urlopen(url + "quit", timeout=5).read()
+        return "" if p.wait(timeout=5) == 0 else f"exit {p.returncode}"
+    except Exception as e:
+        return f"{type(e).__name__}: {e}"
+    finally:
+        if p.poll() is None:
+            p.kill()
+
+
 if __name__ == "__main__":
     # every piece of ahoy's own, the prototypes with them: any can be played by name, listed or not
     listing = subprocess.run(CMD + ["list", "--prototypes"], capture_output=True, text=True, check=True).stdout
@@ -85,6 +113,7 @@ if __name__ == "__main__":
         ok = ok and jpg[:2] == b"\xff\xd8" and jpg[-2:] == b"\xff\xd9" and at > 0 and struct.unpack(">HH", jpg[at + 5:at + 9]) == (1500, 1500)
         results.append((f"export {s} files", "" if ok else f"bad or missing files: {found}"))
     shutil.rmtree(out, ignore_errors=True)
+    results.append(("saver --browser", browser()))
     failed = [(what, why) for what, why in results if why]
     for what, why in failed:
         print(f"FAIL {what}: {why}")

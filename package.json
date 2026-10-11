@@ -1,6 +1,6 @@
 {
   "name": "ahoy",
-  "version": "0.5.4",
+  "version": "0.6.0",
   "description": "Ascii art in your terminal: a picker and a screensaver for ascii.rest pieces, with a pirate pack.",
   "scripts": {
     "start": "node src/cli.ts",

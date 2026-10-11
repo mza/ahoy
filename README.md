@@ -32,6 +32,7 @@ ahoy kraken-rising               # play one full screen
 ahoy ghost-ship burning-ship aws # play a few, ←/→ to move between them
 ahoy saver                       # screensaver: season one, one scene after another
 ahoy saver --shuffle -d 30       # in a random order, 30 seconds each
+ahoy saver --browser             # the screensaver in a browser, full screen: the scenes as a page draws them
 ahoy saver glowing-wake,aws      # just these
 ahoy saver season-one rogers     # season one, and the jolly rogers from the prototypes
 ahoy list                        # what's listed, by group
@@ -67,14 +68,29 @@ The screensaver shows no text unless you press a key, and puts each piece somewh
 | --- | --- |
 | `-d`, `--dwell <seconds>` | how long the screensaver shows each piece (default 15) |
 | `-s`, `--shuffle` | screensaver in a random order |
+| `-b`, `--browser` | play in a browser filling the screen, not in the terminal |
 | `-m`, `--mono` | coloured pieces in the terminal's own colour |
 | `-l`, `--light` | for a light terminal |
 | `-p`, `--prototypes` | list ahoy's prototypes too |
 | `-a`, `--all` | list the ascii.rest library too |
 | `-o`, `--out <folder>` | where `e` saves a paused frame (default: the folder you are in) |
+| `--cell <shape>` | a character cell's height over its width, for a terminal that does not say (most are about 2) |
 | `--scenes <how>` | how a scene is drawn: `ascii` (the default), `dense`, `braille`, `crisp` or `soft` |
 
 Most pieces are up to 80×32, and the scenes are shrunk to fit. In a smaller terminal, pieces drawn in blocks or dense fill are shrunk to fit, and line art is cropped to its middle rather than torn. Coloured pieces need a terminal with truecolor (iTerm2, Ghostty, WezTerm, kitty, Alacritty, Windows Terminal); elsewhere, use `--mono`. When the output isn't a terminal, `ahoy <piece>` prints the piece's first frame as plain text: `ahoy galleon > galleon.txt`.
+
+### In a browser
+
+A terminal draws a character to a cell, and a cell is about twice as tall as it is wide, so it cannot draw a scene as a page does: 200 by 100 round dots on a square grid. A browser can. `ahoy saver --browser` (or `-b` with any pieces) serves a page to this machine alone, sends it the frames, and opens it full screen with nothing round it, in Chromium, Chrome, Brave or Edge if one is installed, else in Firefox or your default browser. A key, a click or a real move of the mouse there ends it, or `Ctrl+C` in the terminal. `--dwell`, `--shuffle`, `--mono` and `--light` work as they do in the terminal. Set `AHOY_BROWSER` to another browser's command to use that, or to `none` to be told the address and open it yourself.
+
+To have it come on when the machine is idle, give it to whatever watches for that. With hypridle:
+
+```ini
+listener {
+    timeout = 300
+    on-timeout = ahoy saver --browser --shuffle
+}
+```
 
 ### Saving a frame
 
@@ -86,7 +102,7 @@ There are contact sheets of every piece in [`docs/sheets`](docs/sheets).
 
 ### Season one (2026)
 
-**season one** (`season-one`): `port-royal`, `pirate-cove`, `glowing-wake`, `sea-battle`, `burning-ship`, `masthead-dawn`, `sunken-galleon`, `treasure-cave`, `pirate-tavern`, `kraken-rising`, `ghost-ship`, `hidden-lagoon`, `aurora-passage`, `volcano-isle`, `lighthouse-reef`. Painted scenes, 200×100, in the style of ascii.rest's own: each cell is shaded in colour and drawn as a halftone dot, with the water, the weather and the light moving. In a terminal a scene is drawn in the dots it is made of, `·` `•` `●`, each in its own colour with a space after it, so that they stand on a square grid as [ascii.rest](https://ascii.rest) draws its scenes on a page. A dot takes two columns and a row, so a scene dot for dot needs a window 400 columns by 100 rows, and a smaller window puts more of the scene in each dot: 200 columns by 50 rows shows it 100 dots by 50. **Shrink the terminal's font** (`ctrl -` in most) for more dots; they look best in a big window at a small size, or full screen in the macOS screensaver, which draws every dot. `d` tries the other ways of drawing them: `dense`, a dot to every column, which is twice the dots across but leaves them in rows with a gap between; `braille`, each dot of the scene a cluster of braille dots, the whole of a scene in 200 columns but small and faint; `crisp`, a cell of the scene to half a block, like pixels; and `soft`, the blurred tones ascii.rest's own terminal player uses (its dots are only drawn as dots on a page).
+**season one** (`season-one`): `port-royal`, `pirate-cove`, `glowing-wake`, `sea-battle`, `burning-ship`, `masthead-dawn`, `sunken-galleon`, `treasure-cave`, `pirate-tavern`, `kraken-rising`, `ghost-ship`, `hidden-lagoon`, `aurora-passage`, `volcano-isle`, `lighthouse-reef`. Painted scenes, 200×100, in the style of ascii.rest's own: each cell is shaded in colour and drawn as a halftone dot, with the water, the weather and the light moving. In a terminal a scene is drawn in the dots it is made of, `·` `•` `●`, each in its own colour with a space after it, so that they stand on a square grid as [ascii.rest](https://ascii.rest) draws its scenes on a page. A dot takes two columns and a row, so a scene dot for dot needs a window 400 columns by 100 rows, and a smaller window puts more of the scene in each dot: 200 columns by 50 rows shows it 100 dots by 50. **Shrink the terminal's font** (`ctrl -` in most) for more dots; they look best in a big window at a small size, or full screen in the macOS screensaver, which draws every dot. `d` tries the other ways of drawing them: `dense`, a dot to every column, which is twice the dots across but leaves them in rows with a gap between; `braille`, each dot of the scene a cluster of braille dots, the whole of a scene in 200 columns but small and faint; `crisp`, a cell of the scene to half a block, like pixels; and `soft`, the blurred tones ascii.rest's own terminal player uses (its dots are only drawn as dots on a page). ahoy asks the terminal the shape of its cells and lays a scene out by it, so in one whose cells are square (a second window of foot started with `-o line-height=14px`, say, for a font 14 pixels wide) a scene is a dot to a cell, as on a page. For the page's picture itself, see *In a browser* below.
 
 ### Resilient Hearts (2026)
 

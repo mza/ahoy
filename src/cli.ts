@@ -5,6 +5,7 @@
  *   ahoy                     pick a piece from a list, each one playing as you go
  *   ahoy <piece>...          play pieces full screen
  *   ahoy saver [what]...     a screensaver: every piece, or the ones you name
+ *   ahoy saver --browser     the same in a browser filling the screen
  *   ahoy list                every piece, by group
  *
  * It lists season one and the AWS logo; --prototypes and --all list the rest.
@@ -14,6 +15,7 @@ import { parseArgs } from "node:util";
 import pkg from "../package.json" with { type: "json" };
 import { App, still, tty } from "./app.ts";
 import { SCENES, type Scenes } from "./stage.ts";
+import { serve } from "./web.ts";
 import { catalog, DEFAULT_SAVER, listed, OWN, PROTOTYPES, select } from "./catalog.ts";
 
 const HELP = `ahoy ${pkg.version}: ascii art in your terminal
@@ -21,6 +23,8 @@ const HELP = `ahoy ${pkg.version}: ascii art in your terminal
   ahoy                      pick a piece; the one under the cursor plays beside the list
   ahoy <piece>...           play pieces full screen (←/→ to move between them)
   ahoy saver [what]...      screensaver; rotates through every piece, or the ones you name
+  ahoy saver --browser      the screensaver in a browser filling the screen, where a
+                            scene is drawn as a page draws it, in round dots
   ahoy list                 every piece, by group
 
   what: a piece (kraken-rising), a group (season-one, resilient-hearts, aws) or all, separated by
@@ -34,6 +38,7 @@ const HELP = `ahoy ${pkg.version}: ascii art in your terminal
 
   -d, --dwell <seconds>     seconds a screensaver shows each piece (default 15)
   -s, --shuffle             screensaver in a random order
+  -b, --browser             play in a browser, full screen, not in the terminal
   -m, --mono                coloured pieces in the terminal's own colour
   -l, --light               for a light terminal
   -p, --prototypes          list ahoy's prototypes too (p in the picker)
@@ -67,6 +72,7 @@ async function main() {
     options: {
       dwell: { type: "string", short: "d" },
       shuffle: { type: "boolean", short: "s" },
+      browser: { type: "boolean", short: "b" },
       mono: { type: "boolean", short: "m" },
       light: { type: "boolean", short: "l" },
       all: { type: "boolean", short: "a" },
@@ -109,6 +115,9 @@ async function main() {
   const words = saver ? (rest.length ? rest : [DEFAULT_SAVER]) : positionals;
   const { picked, unknown } = select(everything, words, shown);
   if (unknown.length) throw new Usage(`no piece or group named ${unknown.map((w) => `"${w}"`).join(", ")}; see ahoy list --prototypes --all`);
+
+  // in a browser: the pieces named, or all that is listed, one after another
+  if (values.browser) return serve(picked.length ? picked : entries, settings);
 
   if (!tty()) {
     // a pipe or a log: the first frame of each, as text
