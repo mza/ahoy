@@ -1,0 +1,55 @@
+# Pushing a tag vX.Y.Z builds ahoy for macOS and Linux and publishes a release
+# with the builds and their SHA256SUMS, which install.sh downloads.
+name: release
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          # macOS builds are made on macOS, so they are signed as they are made.
+          - { os: macos-latest, target: darwin-arm64 }
+          - { os: macos-latest, target: darwin-x64 }
+          - { os: ubuntu-latest, target: linux-x64 }
+          - { os: ubuntu-latest, target: linux-arm64 }
+          - { os: ubuntu-latest, target: linux-x64-musl }
+          - { os: ubuntu-latest, target: linux-arm64-musl }
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - uses: oven-sh/setup-bun@v2
+      - run: npm ci
+      - name: the tag matches package.json
+        run: test "v$(node -p 'require("./package.json").version')" = "$GITHUB_REF_NAME"
+      - run: bun build src/cli.ts --compile --minify --target=bun-${{ matrix.target }} --outfile out/ahoy
+      - name: smoke test where it runs
+        if: matrix.target == 'darwin-arm64' || matrix.target == 'linux-x64'
+        run: out/ahoy --version && out/ahoy list > /dev/null && ! out/ahoy all --all | grep -n '\\u[0-9a-f]\{4\}'
+      - run: tar -czf ahoy-${{ matrix.target }}.tar.gz -C out ahoy
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ahoy-${{ matrix.target }}
+          path: ahoy-${{ matrix.target }}.tar.gz
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - run: cd dist && sha256sum ahoy-*.tar.gz > SHA256SUMS && cat SHA256SUMS
+      - env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" dist/* --repo "$GITHUB_REPOSITORY" --title "$GITHUB_REF_NAME" --generate-notes

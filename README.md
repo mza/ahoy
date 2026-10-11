@@ -1,0 +1,104 @@
+# ahoy
+
+Animated ascii art in your terminal: an 11-piece pirate pack and the AWS logo, just for fun. Browse them with a live preview, play one full screen, or leave a screensaver running.
+
+The pieces are built on [ascii.rest](https://github.com/bas3line/ascii), and its library of 200+ more pieces is a flag away: `--all`.
+
+![The picker: a list of pieces, with the selected one playing beside it](docs/picker.png)
+
+## Install
+
+On macOS or Linux:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/mza/ahoy/main/install.sh | sh
+```
+
+This downloads a single standalone binary for your machine (Apple silicon or Intel Mac, Linux x64 or arm64, glibc or musl), checks it against the release's checksums, and puts it in `~/.local/bin`. You don't need Node or anything else installed.
+
+To pick the version or the location:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/mza/ahoy/main/install.sh | AHOY_VERSION=v0.1.0 AHOY_BIN_DIR=/usr/local/bin sh
+```
+
+To uninstall, delete the binary: `rm ~/.local/bin/ahoy`.
+
+## Use
+
+```sh
+ahoy                             # pick a piece; the one under the cursor plays as you go
+ahoy kraken                      # play one full screen
+ahoy galleon pirate-flag aws     # play a few, ←/→ to move between them
+ahoy saver                       # screensaver: every piece, one after another
+ahoy saver --shuffle -d 30       # in a random order, 30 seconds each
+ahoy saver galleon,kraken,aws    # just these
+ahoy saver pirate scenes --all   # the pirate pack and the library's scenes
+ahoy list                        # every piece, by group
+ahoy --all                       # the picker, with the ascii.rest library too
+```
+
+A selection can name pieces (`galleon`), groups (`pirate`, `aws`) or `all`, separated by spaces or commas. Pieces and groups from the [ascii.rest library](https://ascii.rest) (`donut`, `scenes`, `logos`, `distros`, ...) can be named too; with `--all` they're also listed in the picker, in `ahoy list` and under `all`.
+
+The screensaver shows no text unless you press a key, and puts each piece somewhere different on the screen, so nothing burns in.
+
+![The screensaver playing the AWS logo](docs/screensaver.png)
+
+| Key | Picker | Player and screensaver |
+| --- | --- | --- |
+| `↑` `↓` / `j` `k` | move | |
+| `PgUp` `PgDn` `g` `G` | jump | |
+| `enter` | play the piece and the ones listed with it | |
+| `/` | search names and descriptions | |
+| `x` | mark a piece for the screensaver | |
+| `s` | screensaver over the marked pieces, or everything listed | |
+| `←` `→` | | previous, next |
+| `space` | pause the preview | pause |
+| `,` `.` | a frame back or on (pauses) | same |
+| `m` | coloured pieces in one colour | same |
+| `t` | colours for a light or dark terminal | same |
+| `q` / `esc` | quit | back to the picker, or quit |
+
+| Option | |
+| --- | --- |
+| `-d`, `--dwell <seconds>` | how long the screensaver shows each piece (default 15) |
+| `-s`, `--shuffle` | screensaver in a random order |
+| `-m`, `--mono` | coloured pieces in the terminal's own colour |
+| `-l`, `--light` | for a light terminal |
+| `-a`, `--all` | list the ascii.rest library too |
+
+The biggest pieces are 80×32. In a smaller terminal, pieces drawn in blocks or dense fill are shrunk to fit, and line art is cropped to its middle rather than torn. Coloured pieces need a terminal with truecolor (iTerm2, Ghostty, WezTerm, kitty, Alacritty, Windows Terminal); elsewhere, use `--mono`. When the output isn't a terminal, `ahoy <piece>` prints the piece's first frame as plain text: `ahoy galleon > galleon.txt`.
+
+## The pirate pack
+
+`galleon`, `pirate-flag`, `jolly-roger`, `kraken`, `parrot`, `ships-wheel`, `treasure-map`, `treasure-chest`, `anchor`, `ahoy` and `pirate-heart`. Each uses a different style: dense ascii fill, box-drawing line art, old-school slashes, shaded blocks, procedural shading. They live in [`src/pieces`](src/pieces) and follow the [ascii.rest piece contract](https://github.com/bas3line/ascii/blob/main/CONTRIBUTING.md), so any of them could be contributed upstream.
+
+## Develop
+
+You need Node 23.6 or later, which runs the TypeScript directly, and [Bun](https://bun.sh) to build the binary.
+
+```sh
+npm install
+npm start                 # the picker, from source
+npm start -- saver        # or any other arguments
+npm run typecheck
+npm run build             # dist/ahoy, a standalone binary for this machine
+```
+
+To add a piece, put it in `src/pieces/` and list it in [`src/catalog.ts`](src/catalog.ts). Don't put non-ascii characters in a `String.raw` template: Bun's bundler escapes them, and the binary would print `\u2591` instead of `░`. Use a plain template, and CI checks for it.
+
+## Release
+
+Bump `version` in `package.json`, then push a matching tag:
+
+```sh
+git tag v0.1.0 && git push origin v0.1.0
+```
+
+[`release.yml`](.github/workflows/release.yml) then builds the six binaries (macOS ones on a macOS runner), writes `SHA256SUMS`, and publishes the GitHub release that `install.sh` downloads.
+
+## Credits
+
+The library pieces and the terminal painter come from [ascii.rest](https://github.com/bas3line/ascii) by [@bas3line](https://github.com/bas3line), MIT licensed. The AWS logo is a trademark of Amazon.com, Inc. or its affiliates; other logos are trademarks of their owners. See [NOTICE](NOTICE).
+
+ahoy is MIT licensed; see [LICENSE](LICENSE).

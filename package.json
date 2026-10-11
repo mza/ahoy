@@ -1,0 +1,26 @@
+{
+  "name": "ahoy",
+  "version": "0.1.0",
+  "description": "Ascii art in your terminal: a picker and a screensaver for ascii.rest pieces, with a pirate pack.",
+  "scripts": {
+    "start": "node src/cli.ts",
+    "typecheck": "tsc -p tsconfig.json",
+    "build": "bun build src/cli.ts --compile --minify --outfile dist/ahoy"
+  },
+  "license": "MIT",
+  "type": "module",
+  "dependencies": {
+    "ascii.rest": "^0.4.0"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.5",
+    "typescript": "^5.9.3"
+  },
+  "private": true,
+  "bin": {
+    "ahoy": "src/cli.ts"
+  },
+  "engines": {
+    "node": ">=23.6"
+  }
+}
