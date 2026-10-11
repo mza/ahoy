@@ -59,6 +59,7 @@ import * as powderKeg from "./pieces/powder-keg.ts";
 import * as queenAnnesRevenge from "./pieces/queen-annes-revenge.ts";
 import * as rumBottle from "./pieces/rum-bottle.ts";
 import * as seaBattle from "./pieces/sea-battle.ts";
+import * as seaDog from "./pieces/sea-dog.ts";
 import * as seaSerpent from "./pieces/sea-serpent.ts";
 import * as seagull from "./pieces/seagull.ts";
 import * as sharkFin from "./pieces/shark-fin.ts";
@@ -108,6 +109,7 @@ export const OWN_PIECES: [slug: string, pack: string, piece: Piece][] = [
   ["anchor", "pirate", anchor],
   ["ahoy", "pirate", ahoy],
   ["pirate-heart", "pirate", pirateHeart],
+  ["sea-dog", "pixels", seaDog],
   ["doubloon", "pixels", doubloon],
   ["lit-fuse", "pixels", litFuse],
   ["dead-eye", "pixels", deadEye],
