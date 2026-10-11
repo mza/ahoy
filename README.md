@@ -90,7 +90,7 @@ npm run typecheck
 npm run build             # dist/ahoy, a standalone binary for this machine
 ```
 
-To add a piece, put it in `src/pieces/` and list it in [`src/own.ts`](src/own.ts); the terminal app and the screensaver both play that list. Don't put non-ascii characters in a `String.raw` template: Bun's bundler escapes them, and the binary would print `\u2591` instead of `░`. Use a plain template, and CI checks for it.
+How the pieces were made, and how to make more, is in [docs/MAKING-PIECES.md](docs/MAKING-PIECES.md). To add a piece, put it in `src/pieces/` and list it in [`src/own.ts`](src/own.ts); the terminal app and the screensaver both play that list. Don't put non-ascii characters in a `String.raw` template: Bun's bundler escapes them, and the binary would print `\u2591` instead of `░`. Use a plain template, and CI checks for it.
 
 ## macOS screensaver
 
