@@ -207,7 +207,7 @@ export default function volcanoIsle(): Frame {
       boat[k] = ship(SCX + (px - SCX) / SC, SWL - (SWL - y) / SC);
       const dx = px - CX, dy = y - (TOP - 4);
       const d = Math.sqrt(dx * dx + dy * dy * 1.2);
-      glow[k] = Math.exp(-d / 12) * 0.5 + Math.exp(-(d * d) / (2 * 37 * 37)) * 0.85 + Math.exp(-d / 55) * 0.1;
+      glow[k] = Math.exp(-d / 12) * 0.5 + Math.exp(-(d * d) / (2 * 42 * 42)) * 0.92 + Math.exp(-d / 55) * 0.1;
       if (r >= WL) {
         mat[k] = SEA;
         continue;
@@ -229,7 +229,7 @@ export default function volcanoIsle(): Frame {
             const dd = seg(px, y, ax, ay, bx, by);
             if (dd > 3.5) continue;
             const here = (bx - ax) * (y - ay) - (by - ay) * (px - ax), fire = (bx - ax) * (TOP - 12 - ay) - (by - ay) * (CX - ax);
-            if (here * fire > 0) lit[k] += Math.exp(-dd / 1.3) * (0.5 + 0.5 * tex) * Math.exp(-d / 48) * 0.75;
+            if (here * fire > 0) lit[k] += Math.exp(-dd / 1.7) * (0.6 + 0.4 * tex) * Math.exp(-d / 60) * 2.6;
             else if (dd < 1.6) lit[k] *= 0.3;
           }
         // the rivers
@@ -263,9 +263,9 @@ export default function volcanoIsle(): Frame {
       // the smoke's road: up out of the crater, then leaning east on the wind and spreading
       const rise = TOP + 2 - y;
       if (rise > 0) {
-        const cx = CX + 1 + rise * 0.5 + rise * rise * 0.03, wd = 5 + rise * 0.56;
+        const cx = CX + 1 + rise * 0.22 + rise * rise * 0.02, wd = 6 + rise * 0.62;
         const q = (px - cx) / wd;
-        smokeShape[k] = Math.max(0, 1 - q * q) * smooth(0, 3, rise);
+        smokeShape[k] = Math.max(0, 1.45 - Math.abs(q)) * smooth(0, 2, rise);
       }
     }
   }
@@ -321,29 +321,29 @@ export default function volcanoIsle(): Frame {
         let cr = R[k], cg = G[k], cb = B[k];
         if (m === SKY) {
           // the sky lit red from below
-          const g = glow[k] * pulse;
-          (cr += g * 1.0), (cg += g * (0.07 + 0.3 * g)), (cb += g * 0.05);
+          const g = glow[k] * pulse * (1 + dith[k] * 0.3);
+          (cr += g * 1.0), (cg += g * (0.05 + 0.22 * g)), (cb += g * 0.05);
           // smoke and ash: one column of rolling lobes, dark against the glow, hot underneath, pale-edged higher up
           const ss = smokeShape[k];
-          if (ss > 0) {
+          if (ss > 0.27) {
             const ux = px - t * 1.3, uy = y + t * 2.3;
             const big = lobes(ux / 12, uy / 12, 1), small = lobes(ux / 5.5 + 3, uy / 5.5, 2);
             const bump = 0.62 * big + 0.38 * small;
-            if (ss + (bump - 0.55) * 0.75 > 0.16) {
+            if (ss + (bump - 0.5) * 0.9 > 0.72) {
               // which way each lobe faces: lit where it falls away toward the crater
               const dx = px - CX, dy = y - TOP, d = Math.sqrt(dx * dx + dy * dy) + 0.01;
               const ox = (-dx / d) * 2.6, oy = (-dy / d) * 2.6 + 1;
               const toward = 0.62 * lobes((ux + ox) / 12, (uy + oy) / 12, 1) + 0.38 * lobes((ux + ox) / 5.5 + 3, (uy + oy) / 5.5, 2);
               const face = clamp(0.5 + (bump - toward) * 2.4);
-              const v = 0.085 + 0.14 * bump + 0.1 * face;
+              const v = 0.05 + 0.13 * bump * bump + 0.07 * face;
               let sr = v * 0.98, sg = v * 0.86, sb = v * 1.3;
               // pale edges where the far glow finds the lobes
-              const pale = face * face * smooth(0.25, 0.9, bump) * smooth(8, 30, d) * 0.3;
+              const pale = face * face * smooth(0.25, 0.9, bump) * smooth(8, 30, d) * 0.34;
               (sr += pale * 0.95), (sg += pale * 0.86), (sb += pale * 1.12);
               // brown, then orange, as it nears the fire
-              const brown = Math.exp(-d / 34) * pulse * (0.3 + 0.9 * face);
-              (sr = mix(sr, 0.5, clamp(brown))), (sg = mix(sg, 0.24, clamp(brown))), (sb = mix(sb, 0.13, clamp(brown)));
-              const hot = clamp(Math.exp(-d / 13) * 1.5 * pulse * (0.25 + 0.95 * face));
+              const brown = clamp(Math.exp(-d / 30) * pulse * (0.15 + 1.1 * face * bump));
+              (sr = mix(sr, 0.4, brown)), (sg = mix(sg, 0.17, brown)), (sb = mix(sb, 0.1, brown));
+              const hot = clamp(Math.exp(-d / 11) * 1.5 * pulse * (0.05 + 1.2 * face * face));
               (sr = mix(sr, 1.0, hot)), (sg = mix(sg, 0.46, hot)), (sb = mix(sb, 0.1, hot));
               (cr = sr), (cg = sg), (cb = sb);
               solid[k] = 1;
@@ -445,7 +445,7 @@ export default function volcanoIsle(): Frame {
           const keep = mix(0.3, 1.1, face) * mix(1, 0.75, depth);
           (cr = AR[j] * keep + 0.014), (cg = AG[j] * keep + 0.006), (cb = AB[j] * keep + 0.016);
           // the eruption's road of light on the water, and the glare where each river goes in
-          const road = Math.exp(-Math.abs(x + 0.5 - CX) / (26 + depth * 44)) * (0.15 + 0.85 * smooth(0.4, 0.75, w)) * 0.85 * pulse;
+          const road = Math.exp(-Math.abs(x + 0.5 - CX) / (34 + depth * 56)) * (0.15 + 0.85 * smooth(0.4, 0.75, w)) * 0.85 * pulse;
           (cr += road), (cg += road * 0.42), (cb += road * 0.08);
           for (let i = 0; i < SHORE.length; i++) {
             const dx = Math.abs(x + 0.5 - SHORE[i]) / (1.5 + (y - WL) * 0.35);
@@ -465,7 +465,7 @@ export default function volcanoIsle(): Frame {
         // the ship, black against the burning water
         const b = boat[k];
         if (b) {
-          if (b === 3) (cr = 0.6 * pulse), (cg = 0.17 * pulse), (cb = 0.04);
+          if (b === 3) (cr = 0.72 * pulse), (cg = 0.2 * pulse), (cb = 0.05);
           else if (b === 2) (cr = 0.5 * pulse), (cg = 0.13 * pulse), (cb = 0.03);
           else (cr = 0.016), (cg = 0.01), (cb = 0.018);
           fl = 0;
