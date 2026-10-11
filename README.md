@@ -1,6 +1,6 @@
 # ahoy
 
-Animated ascii art in your terminal. **Season one (2026)** is sixteen painted pirate scenes: big halftone pictures, alive with moving water, weather and light, from `skull-island` to `kraken-rising`. There's the AWS logo too, just for fun. Browse them with a live preview, play one full screen, or leave a screensaver running.
+Animated ascii art in your terminal. **Season one (2026)** is fifteen painted pirate scenes: big halftone pictures, alive with moving water, weather and light, from `port-royal` to `kraken-rising`. There's the AWS logo too, just for fun. Browse them with a live preview, play one full screen, or leave a screensaver running.
 
 On the way to the scenes ahoy grew a hundred-odd **prototypes**, pirate pixel art, jolly rogers and logos in terminal characters. They're still here, a key away: `p` in the picker, or `--prototypes`. The pieces are built on [ascii.rest](https://github.com/bas3line/ascii), and its library of 200+ more is a flag away: `--all`.
 
@@ -32,7 +32,7 @@ ahoy kraken-rising               # play one full screen
 ahoy ghost-ship burning-ship aws # play a few, ←/→ to move between them
 ahoy saver                       # screensaver: season one, one scene after another
 ahoy saver --shuffle -d 30       # in a random order, 30 seconds each
-ahoy saver skull-island,aws      # just these
+ahoy saver glowing-wake,aws      # just these
 ahoy saver season-one rogers     # season one, and the jolly rogers from the prototypes
 ahoy list                        # what's listed, by group
 ahoy --prototypes                # the picker, with the prototypes too
@@ -84,7 +84,7 @@ There are contact sheets of every piece in [`docs/sheets`](docs/sheets).
 
 ### Season one (2026)
 
-**season one** (`season-one`): `skull-island`, `port-royal`, `pirate-cove`, `glowing-wake`, `sea-battle`, `burning-ship`, `masthead-dawn`, `sunken-galleon`, `treasure-cave`, `pirate-tavern`, `kraken-rising`, `ghost-ship`, `hidden-lagoon`, `aurora-passage`, `volcano-isle`, `lighthouse-reef`. Painted scenes, 200×100, in the style of ascii.rest's own: each cell is shaded in colour and drawn as a halftone dot, with the water, the weather and the light moving. In a terminal they're shrunk to fit, so they look best in a big window, or full screen in the macOS screensaver.
+**season one** (`season-one`): `port-royal`, `pirate-cove`, `glowing-wake`, `sea-battle`, `burning-ship`, `masthead-dawn`, `sunken-galleon`, `treasure-cave`, `pirate-tavern`, `kraken-rising`, `ghost-ship`, `hidden-lagoon`, `aurora-passage`, `volcano-isle`, `lighthouse-reef`. Painted scenes, 200×100, in the style of ascii.rest's own: each cell is shaded in colour and drawn as a halftone dot, with the water, the weather and the light moving. In a terminal they're shrunk to fit, so they look best in a big window, or full screen in the macOS screensaver.
 
 **just for fun** (`aws`): `aws`, the AWS wordmark over its smile.
 

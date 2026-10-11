@@ -106,7 +106,6 @@ import * as shovelRoger from "./pieces/shovel-roger.ts";
 import * as skeletonKey from "./pieces/skeleton-key.ts";
 import * as skullAndCrossbones from "./pieces/skull-and-crossbones.ts";
 import * as skullCandle from "./pieces/skull-candle.ts";
-import * as skullIsland from "./pieces/skull-island.ts";
 import * as skullMoon from "./pieces/skull-moon.ts";
 import * as sloop from "./pieces/sloop.ts";
 import * as snakeRoger from "./pieces/snake-roger.ts";
@@ -249,7 +248,6 @@ export const OWN_PIECES: [slug: string, pack: string, piece: Piece][] = [
   ["crossed-flintlocks", "lore", crossedFlintlocks],
   ["crows-nest", "lore", crowsNest],
   ["message-in-a-bottle", "lore", messageInABottle],
-  ["skull-island", "season-one", skullIsland],
   ["port-royal", "season-one", portRoyal],
   ["pirate-cove", "season-one", pirateCove],
   ["glowing-wake", "season-one", glowingWake],

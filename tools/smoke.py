@@ -66,7 +66,7 @@ if __name__ == "__main__":
     jobs += [("picker --prototypes", ["--prototypes"], c, r, [b"G", b"p", b"j", b"\r", b"q", b"q"], 0.8) for c, r in sizes]
     jobs += [("saver lore --light", ["saver", "lore", "-d", "1", "--light"], c, r, [b"q"], 2.5) for c, r in sizes]
     # a frame saved from a pause: a piece in blocks, one in letters, one in box drawing and a scene
-    saved = ["doubloon", "calico-jack", "treasure-chest", "skull-island"]
+    saved = ["doubloon", "calico-jack", "treasure-chest", "burning-ship"]
     out = tempfile.mkdtemp(prefix="ahoy-smoke-")
     jobs += [(f"export {s}", [s, "-o", out], 100, 30, [b" ", b".", b"e", b"", b"", b"", b"", b"", b"", b"q"], 0.6) for s in saved if s in slugs]
     start = time.time()

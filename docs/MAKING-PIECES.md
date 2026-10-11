@@ -65,7 +65,7 @@ For the macOS screensaver, `macos/tools/snapshot.swift` renders the built `Ahoy.
 
 ```sh
 sh macos/build.sh && cd macos && xcrun swiftc -O tools/snapshot.swift -o build/snapshot
-build/snapshot build/Ahoy.saver /tmp/shots 1440 900 no skull-island,calico-jack
+build/snapshot build/Ahoy.saver /tmp/shots 1440 900 no burning-ship,aws
 ```
 
 ## Techniques that worked
@@ -109,10 +109,10 @@ Copied from ascii.rest's own scenes (`kyoto-dusk.ts`, `alpine-dawn.ts`, `lantern
 
 **The scenes need the most work.** What went wrong and what to push on:
 
-- **They're dark and murky.** Night scenes drifted towards near-black (`storm-at-sea` between lightning flashes, `pirate-tavern` on its first pass, `wreck-coast`). `storm-at-sea` and `wreck-coast` were later cut from season one: the user said they "don't work for what we want". Every frame needs a lit focal point and clear silhouettes against light: a moon behind the ship, a bright window behind the tankards.
+- **They're dark and murky.** Night scenes drifted towards near-black (`storm-at-sea` between lightning flashes, `pirate-tavern` on its first pass, `wreck-coast`). `storm-at-sea`, `wreck-coast` and `skull-island` were later cut from season one: the user said they "don't work for what we want". Every frame needs a lit focal point and clear silhouettes against light: a moon behind the ship, a bright window behind the tankards.
 - **Focal shapes get lost.** A careened hull or a small wreck reads as a dark mass. Put the subject in silhouette against the brightest part of the sky, and give it a rim light.
 - **They suffer in a terminal.** ahoy shrinks a scene to the terminal through ascii.rest's painter, which blurs it into shaded half blocks; they look best full screen in the macOS screensaver (round dots). Judge them with `render-dots.py`, and also check `./dist/ahoy <scene>` in a big window.
-- **More contrast, fewer things, bolder value structure** before detail. The best ones (`skull-island`, `glowing-wake`, `port-royal`, `burning-ship`) have one strong shape against one strong light.
+- **More contrast, fewer things, bolder value structure** before detail. The best ones (`glowing-wake`, `port-royal`, `burning-ship`) have one strong shape against one strong light.
 
 ## What failed (don't repeat)
 
