@@ -5,7 +5,8 @@
   "scripts": {
     "start": "node src/cli.ts",
     "typecheck": "tsc -p tsconfig.json",
-    "build": "bun build src/cli.ts --compile --minify --outfile dist/ahoy"
+    "build": "bun build src/cli.ts --compile --minify --outfile dist/ahoy",
+    "saver": "sh macos/build.sh"
   },
   "license": "MIT",
   "type": "module",

@@ -151,34 +151,55 @@ export class Stage {
       }
   }
 
-  // Blocks as an image two pixels a cell high, sampled at the smaller size and drawn back in blocks. A character
-  // that is not a block, a rope's strands say, is kept where it falls.
+  // Blocks as an image two pixels a cell high, shrunk by area: each pixel of the smaller image takes the colour that
+  // covers most of it, a thin stroke surviving whichever colour it is in, and a cell whose two halves take two colours
+  // draws them both. A character that is not a block, a rope's strands say, is kept where it falls.
   private resample(screen: Screen, sx: number, sy: number, bw: number, bh: number, left: number, top: number, dw: number, dh: number) {
     const { cols, ch, fg, bg } = this.cells;
-    const half = (px: number, py: number) => {
-      const k = (sy + (py >> 1)) * cols + sx + px;
-      const c = ch[k], halves = HALVES[c];
-      // a character that is not a block is drawn as itself, so it inks no pixels
-      return { k, tone: halves ? halves[py & 1] : 0 };
+    const ground = bg[sy * cols + sx], PH = 2 * bh, TONE = 33554432;
+    // a source pixel: 0 for the ground, else its shade (1 to 4) times TONE plus its ink plus 1
+    const pixel = (px: number, py: number) => {
+      const k = (sy + (py >> 1)) * cols + sx + px, halves = HALVES[ch[k]];
+      const t = halves ? halves[py & 1] : 0;
+      return t === 0 ? 0 : Math.round(t * 4) * TONE + fg[k] + 1;
     };
+    const weights = new Map<number, number>();
+    const sample = (i: number, py: number) => {
+      const x0 = (i * bw) / dw, x1 = ((i + 1) * bw) / dw, y0 = (py * PH) / (2 * dh), y1 = ((py + 1) * PH) / (2 * dh);
+      weights.clear();
+      let total = 0, ink = 0;
+      for (let x = Math.floor(x0); x < Math.min(bw, Math.ceil(x1)); x++) {
+        const wx = Math.min(x + 1, x1) - Math.max(x, x0);
+        for (let y = Math.floor(y0); y < Math.min(PH, Math.ceil(y1)); y++) {
+          const w = wx * (Math.min(y + 1, y1) - Math.max(y, y0)), v = pixel(x, y);
+          total += w;
+          if (v) (ink += w), weights.set(v, (weights.get(v) ?? 0) + w);
+        }
+      }
+      if (ink < total * 0.5) return 0;
+      let best = 0, most = -1;
+      for (const [v, w] of weights) if (w > most) (best = v), (most = w);
+      return best;
+    };
+    const tone = (v: number) => Math.floor(v / TONE), inkOf = (v: number) => (v % TONE) - 1;
     for (let j = 0; j < dh; j++)
       for (let i = 0; i < dw; i++) {
         const px = Math.min(bw - 1, Math.floor(((i + 0.5) * bw) / dw));
         const cy = Math.min(bh - 1, Math.floor(((j + 0.5) * bh) / dh));
         const own = (sy + cy) * cols + sx + px;
-        if (!(ch[own] in HALVES)) {
+        if (ch[own] !== " " && !(ch[own] in HALVES)) {
           screen.put(left + i, top + j, ch[own], fg[own], bg[own]);
           continue;
         }
-        const a = half(px, Math.min(2 * bh - 1, Math.floor(((2 * j + 0.5) * 2 * bh) / (2 * dh))));
-        const b = half(px, Math.min(2 * bh - 1, Math.floor(((2 * j + 1.5) * 2 * bh) / (2 * dh))));
-        const ink = a.tone >= b.tone ? a.k : b.k;
-        let c: string;
-        if (a.tone === b.tone) c = TONES[Math.round(a.tone * 4)];
-        else if (b.tone === 0) c = a.tone === 1 ? "▀" : TONES[Math.round(a.tone * 2)];
-        else if (a.tone === 0) c = b.tone === 1 ? "▄" : TONES[Math.round(b.tone * 2)];
-        else c = TONES[Math.round(((a.tone + b.tone) / 2) * 4)];
-        screen.put(left + i, top + j, c, fg[ink], bg[ink]);
+        const a = sample(i, 2 * j), b = sample(i, 2 * j + 1), x = left + i, y = top + j;
+        if (a === b) screen.put(x, y, a ? TONES[tone(a)] : " ", a ? inkOf(a) : -1, ground);
+        else if (!a) screen.put(x, y, tone(b) === 4 ? "▄" : TONES[Math.max(1, tone(b) >> 1)], inkOf(b), ground);
+        else if (!b) screen.put(x, y, tone(a) === 4 ? "▀" : TONES[Math.max(1, tone(a) >> 1)], inkOf(a), ground);
+        else if (tone(a) === 4 && tone(b) === 4 && inkOf(b) >= 0) screen.put(x, y, "▀", inkOf(a), inkOf(b));
+        else {
+          const strong = tone(a) >= tone(b) ? a : b;
+          screen.put(x, y, TONES[Math.round((tone(a) + tone(b)) / 2)], inkOf(strong), ground);
+        }
       }
   }
 

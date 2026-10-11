@@ -10,7 +10,7 @@
  * for hours.
  */
 import process from "node:process";
-import type { Entry } from "./catalog.ts";
+import { heading, OWN, type Entry } from "./catalog.ts";
 import { Screen, session, type Key } from "./screen.ts";
 import { Stage, type Look } from "./stage.ts";
 
@@ -180,8 +180,7 @@ export class App {
       if (!row) break;
       const y = top + 1 + i;
       if ("head" in row) {
-        const label = row.head === "pirate" ? "pirate pack" : row.head === "aws" ? "just for fun" : row.head;
-        screen.text(2, y, label, row.head === "pirate" || row.head === "aws" ? ACCENT : DIM, -1, LW - 4);
+        screen.text(2, y, heading(row.head), OWN.includes(row.head) ? ACCENT : DIM, -1, LW - 4);
       } else {
         const on = row.entry === entry;
         if (on) screen.put(1, y, "▌", ACCENT);

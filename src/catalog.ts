@@ -1,23 +1,12 @@
 /*
- * Every piece ahoy can play: its own pirate pack and the AWS logo, then the
+ * Every piece ahoy can play: its own (see own.ts), then the
  * ascii.rest library, by category. Only ahoy's own are listed unless asked
  * for all of them, but any library piece or group can still be named. Each is
  * loaded once, up front, so the picker can show names and notes straight away.
  */
 import { load as library, names as libraryNames } from "ascii.rest";
+import { OWN_PIECES, PACKS } from "./own.ts";
 import type { Piece } from "./types.ts";
-import * as ahoy from "./pieces/ahoy.ts";
-import * as anchor from "./pieces/anchor.ts";
-import * as aws from "./pieces/aws.ts";
-import * as galleon from "./pieces/galleon.ts";
-import * as jollyRoger from "./pieces/jolly-roger.ts";
-import * as kraken from "./pieces/kraken.ts";
-import * as parrot from "./pieces/parrot.ts";
-import * as pirateFlag from "./pieces/pirate-flag.ts";
-import * as pirateHeart from "./pieces/pirate-heart.ts";
-import * as shipsWheel from "./pieces/ships-wheel.ts";
-import * as treasureChest from "./pieces/treasure-chest.ts";
-import * as treasureMap from "./pieces/treasure-map.ts";
 
 export interface Entry {
   slug: string;
@@ -26,29 +15,17 @@ export interface Entry {
   piece: Piece;
 }
 
-// In the order the picker lists them.
-const PIRATE: [string, Piece][] = [
-  ["galleon", galleon],
-  ["pirate-flag", pirateFlag],
-  ["jolly-roger", jollyRoger],
-  ["kraken", kraken],
-  ["parrot", parrot],
-  ["ships-wheel", shipsWheel],
-  ["treasure-map", treasureMap],
-  ["treasure-chest", treasureChest],
-  ["anchor", anchor],
-  ["ahoy", ahoy],
-  ["pirate-heart", pirateHeart],
-];
-
 /** The packs ahoy brings, before the library's categories. */
-export const OWN = ["pirate", "aws"];
+export const OWN = PACKS.map(([pack]) => pack);
+
+/** The heading the picker gives a group. */
+export const heading = (pack: string) => PACKS.find(([p]) => p === pack)?.[1] ?? pack;
 
 /** The pieces a screensaver plays when it is not told which: every listed one. */
 export const DEFAULT_SAVER = "all";
 
 export async function catalog(): Promise<Entry[]> {
-  const own: Entry[] = [...PIRATE.map(([slug, piece]) => ({ slug, pack: "pirate", piece })), { slug: "aws", pack: "aws", piece: aws }];
+  const own: Entry[] = OWN_PIECES.map(([slug, pack, piece]) => ({ slug, pack, piece }));
   const lib = await Promise.all(
     libraryNames.map(async (slug): Promise<Entry> => {
       const piece = (await library[slug]()) as Piece;
