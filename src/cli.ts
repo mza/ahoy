@@ -39,13 +39,13 @@ const HELP = `ahoy ${pkg.version}: ascii art in your terminal
   -p, --prototypes          list ahoy's prototypes too (p in the picker)
   -a, --all                 list the ascii.rest library too
   -o, --out <folder>        where e saves a paused frame (default: this folder)
-      --scenes <how>        how a scene is drawn: ascii (the default), crisp or soft;
+      --scenes <how>        how a scene is drawn: ascii (the default), dense, crisp or soft;
                             d changes it as you watch
   -h, --help                this help
   -v, --version             the version
 
   keys: ←/→ skip · space pause · ,/. a frame back or on · m mono · t light/dark
-        d the next way of drawing a scene (ascii, crisp, soft)
+        d the next way of drawing a scene (ascii, dense, crisp, soft)
         q back or quit · in the picker, x marks pieces for s, the screensaver
         e, when paused, saves the frame as a 1500x1500 PNG (transparent) and JPEG
 

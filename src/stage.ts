@@ -5,10 +5,12 @@
  * A piece is first trimmed to the part of its frame it ever draws in. If that
  * still does not fit, how it is made to fit depends on how it is drawn, since
  * dropping rows and columns tears a picture made of thin lines:
- *  - a scene is drawn in the dots it is made of, a character to a terminal
- *    cell in its own colour on the ground, as a page draws it; or a cell to
- *    half a terminal cell, each the colour of its dot on the ground, sharp;
- *    or, softly, by ascii.rest's own painter, which blurs it first;
+ *  - a scene is drawn in the dots it is made of, each a character in its own
+ *    colour on the ground with a space after it, so that they stand on a
+ *    square grid as a page draws them; or a dot to every cell, which is
+ *    twice the dots across but leaves them in rows; or a cell to half a
+ *    terminal cell, each the colour of its dot on the ground, sharp; or,
+ *    softly, by ascii.rest's own painter, which blurs it first;
  *  - a picture in block elements is resampled at half-cell height, two pixels a
  *    cell, and drawn again in blocks, so it shrinks as an image does;
  *  - a picture in dense ascii fill keeps, for each cell, the strongest
@@ -20,9 +22,12 @@ import { dark, int, mix, painter } from "./paint.ts";
 import type { Screen } from "./screen.ts";
 import type { Frame } from "./types.ts";
 
-/** How a scene is drawn in a terminal: in its own dots, as characters; in sharp half blocks; or in ascii.rest's soft tones. */
-export type Scenes = "ascii" | "crisp" | "soft";
-export const SCENES: Scenes[] = ["ascii", "crisp", "soft"];
+/**
+ * How a scene is drawn in a terminal: in its own dots on a square grid, as a page draws it; in its dots a character
+ * to a cell, closer together across than down; in sharp half blocks; or in ascii.rest's soft tones.
+ */
+export type Scenes = "ascii" | "dense" | "crisp" | "soft";
+export const SCENES: Scenes[] = ["ascii", "dense", "crisp", "soft"];
 
 export interface Look {
   mono: boolean;
@@ -161,8 +166,11 @@ export class Stage {
   // A scene, in its own dots or in sharp half blocks, as large as the room allows and no larger than it is.
   private scene(screen: Screen, x: number, y: number, w: number, h: number, ax: number, ay: number) {
     const { cols, rows, fps } = this.meta, { inks, ground, color } = this.sharp!, pic = this.pic;
-    const s = Math.min(1, w / cols, (2 * h) / rows);
-    const pw = Math.max(1, Math.round(cols * s)), half = Math.max(2, Math.round(rows * s)), ph = Math.ceil(half / 2);
+    // on a square grid a dot takes two cells across and a row; otherwise a cell of the scene is half a terminal cell
+    const square = this.look.scenes === "ascii";
+    const s = square ? Math.min(1, w / (2 * cols), h / rows) : Math.min(1, w / cols, (2 * h) / rows);
+    const dots = Math.max(1, Math.round(cols * s)), pw = square ? 2 * dots : dots;
+    const half = Math.max(2, Math.round(rows * s)), ph = square ? half : Math.ceil(half / 2);
     const step = fps > 0 ? this.at() : 0;
     if (this.sized !== `${pw}x${ph}` || step !== this.drawnAt) {
       if (this.sized !== `${pw}x${ph}`) {
@@ -173,14 +181,16 @@ export class Stage {
       const lines = this.frame(fps > 0 ? step / fps : 0, { paper: this.paper, color }).split("\n");
       // The cells of the scene a stretch of the picture covers: from, and up to but not counting.
       const reach = (i: number, n: number, of: number) => [Math.floor((i * of) / n), Math.max(Math.floor((i * of) / n) + 1, Math.floor(((i + 1) * of) / n))];
-      if (this.look.scenes === "ascii") {
-        // the scene's own dots, a character to a terminal cell: its size by how much the cells it covers are
-        // covered, taken together, and its colour that of the heaviest of them. A terminal cell is twice as tall
-        // as it is wide, so it stands for two rows of the scene at least.
-        for (let j = 0, k = 0; j < ph; j++) {
+      if (this.look.scenes === "ascii" || this.look.scenes === "dense") {
+        // the scene's own dots: each one's size by how much the cells it covers are covered, taken together, and
+        // its colour that of the heaviest of them. On the square grid, with room, that is the scene dot for dot.
+        // A dot to every cell stands for two rows of the scene at least, a cell being twice as tall as it is wide.
+        pic.ch.fill(" ");
+        pic.bg.fill(ground);
+        for (let j = 0; j < ph; j++) {
           const [y0, y1] = reach(j, ph, rows);
-          for (let i = 0; i < pw; i++, k++) {
-            const [x0, x1] = reach(i, pw, cols);
+          for (let i = 0; i < dots; i++) {
+            const [x0, x1] = reach(i, dots, cols), k = j * pw + (square ? 2 * i : i);
             let most = -1, at = 0, sum = 0;
             for (let sy = y0; sy < y1; sy++)
               for (let sx = x0; sx < x1; sx++) {
@@ -191,7 +201,6 @@ export class Stage {
             const c = (sum / ((y1 - y0) * (x1 - x0))) * 1.15;
             pic.ch[k] = c < 0.07 ? " " : c < 0.32 ? "·" : c < 0.7 ? "•" : "●";
             pic.fg[k] = inks[color[at]] ?? inks[0];
-            pic.bg[k] = ground;
           }
         }
       } else {
