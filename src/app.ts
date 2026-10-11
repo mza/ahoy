@@ -23,6 +23,8 @@ export interface Settings extends Look {
   shuffle: boolean;
   /** Where a paused frame is saved as a picture. */
   out: string;
+  /** A character cell's height over its width, to use whatever the terminal says. */
+  cell?: number;
 }
 
 const ACCENT = 0xff9900;
@@ -119,9 +121,14 @@ export class App {
 
   private run() {
     return new Promise<void>((resolve) => {
+      // a cell's shape as the terminal gives it, unless it was given on the command line; kept within reason
+      if (this.settings.cell) this.screen.ratio = this.settings.cell;
       const end = session(
         (key) => this.key(key),
         () => this.screen.resize(),
+        (ratio) => {
+          if (!this.settings.cell) this.screen.ratio = Math.max(0.8, Math.min(3, ratio));
+        },
       );
       let last = performance.now();
       const timer = setInterval(() => {

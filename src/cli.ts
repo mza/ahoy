@@ -39,6 +39,8 @@ const HELP = `ahoy ${pkg.version}: ascii art in your terminal
   -p, --prototypes          list ahoy's prototypes too (p in the picker)
   -a, --all                 list the ascii.rest library too
   -o, --out <folder>        where e saves a paused frame (default: this folder)
+      --cell <shape>        a character cell's height over its width, if the
+                            terminal does not say (most are about 2)
       --scenes <how>        how a scene is drawn: ascii (the default), dense, braille, crisp
                             or soft;
                             d changes it as you watch
@@ -71,6 +73,7 @@ async function main() {
       prototypes: { type: "boolean", short: "p" },
       out: { type: "string", short: "o" },
       scenes: { type: "string" },
+      cell: { type: "string" },
       help: { type: "boolean", short: "h" },
       version: { type: "boolean", short: "v" },
     },
@@ -81,7 +84,9 @@ async function main() {
   if (!(dwell > 0)) throw new Usage(`--dwell takes a number of seconds above 0, not "${values.dwell}"`);
   const scenes = (values.scenes ?? "ascii") as Scenes;
   if (!SCENES.includes(scenes)) throw new Usage(`--scenes takes ${SCENES.join(", ")}, not "${values.scenes}"`);
-  const settings = { dwell, shuffle: !!values.shuffle, mono: !!values.mono, light: !!values.light, scenes, out: values.out ?? "." };
+  const cell = values.cell === undefined ? undefined : Number(values.cell);
+  if (cell !== undefined && !(cell >= 0.5 && cell <= 4)) throw new Usage(`--cell takes a cell's height over its width, about 2, not "${values.cell}"`);
+  const settings = { cell, dwell, shuffle: !!values.shuffle, mono: !!values.mono, light: !!values.light, scenes, out: values.out ?? "." };
 
   const everything = await catalog();
   const shown = { prototypes: !!values.prototypes, library: !!values.all };

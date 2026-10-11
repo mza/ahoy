@@ -173,15 +173,21 @@ export class Stage {
   // A scene, in its own dots or in sharp half blocks, as large as the room allows and no larger than it is.
   private scene(screen: Screen, x: number, y: number, w: number, h: number, ax: number, ay: number) {
     const { cols, rows, fps } = this.meta, { inks, ground, color } = this.sharp!, pic = this.pic;
-    // on a square grid a dot takes two cells across and a row; otherwise a cell of the scene is half a terminal cell
-    const square = this.look.scenes === "ascii";
-    const s = square ? Math.min(1, w / (2 * cols), h / rows) : Math.min(1, w / cols, (2 * h) / rows);
-    const dots = Math.max(1, Math.round(cols * s)), pw = square ? 2 * dots : dots;
-    const half = Math.max(2, Math.round(rows * s)), ph = square ? half : Math.ceil(half / 2);
+    // A cell is `tall` times as high as it is wide, 2 or so. On the square grid a dot takes as many cells across as
+    // make it as wide as a row is high, and a row; a dot to every cell takes one. Either way a row of dots stands
+    // for as many rows of the scene as keep the picture its shape. Otherwise half a cell is a pixel.
+    const tall = screen.ratio, mode = this.look.scenes, dotted = mode === "ascii" || mode === "dense";
+    const across = mode === "ascii" ? Math.max(1, Math.round(tall)) : 1;
+    const s = Math.min(1, w / (across * cols), (h * tall) / (rows * across));
+    const dots = Math.max(1, Math.round(cols * s)), pw = across * dots;
+    const half = dotted ? 0 : Math.max(2, Math.round((rows * s * 2) / tall));
+    const ph = dotted ? Math.max(1, Math.round((rows * s * across) / tall)) : Math.ceil(half / 2);
+    const square = across > 1;
     const step = fps > 0 ? this.at() : 0;
-    if (this.sized !== `${pw}x${ph}` || step !== this.drawnAt) {
-      if (this.sized !== `${pw}x${ph}`) {
-        this.sized = `${pw}x${ph}`;
+    const sized = `${pw}x${ph} ${dots}`;
+    if (this.sized !== sized || step !== this.drawnAt) {
+      if (this.sized !== sized) {
+        this.sized = sized;
         Object.assign(pic, { w: pw, h: ph, ch: new Array<string>(pw * ph).fill(" "), fg: new Int32Array(pw * ph), bg: new Int32Array(pw * ph) });
       }
       this.drawnAt = step;
@@ -197,7 +203,7 @@ export class Stage {
         for (let j = 0; j < ph; j++) {
           const [y0, y1] = reach(j, ph, rows);
           for (let i = 0; i < dots; i++) {
-            const [x0, x1] = reach(i, dots, cols), k = j * pw + (square ? 2 * i : i);
+            const [x0, x1] = reach(i, dots, cols), k = j * pw + across * i;
             let most = -1, at = 0, sum = 0;
             for (let sy = y0; sy < y1; sy++)
               for (let sx = x0; sx < x1; sx++) {

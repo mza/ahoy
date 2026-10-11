@@ -8,6 +8,9 @@ import { GAP, NEAR, sgr } from "./paint.ts";
 
 // The alternate screen, the cursor hidden and no wrapping.
 const ENTER = "\x1b[?1049h\x1b[?25l\x1b[?7l\x1b[2J";
+// Asks the terminal the size of a character cell in pixels; one that knows answers ESC [ 6 ; height ; width t.
+const ASK_CELL = "\x1b[16t";
+const CELL = /\x1b\[6;(\d+);(\d+)t/g;
 const LEAVE = "\x1b[0m\x1b[?7h\x1b[?25h\x1b[?1049l";
 
 export type Key =
@@ -53,6 +56,8 @@ export function keys(data: string): Key[] {
 export class Screen {
   cols = 0;
   rows = 0;
+  /** How much taller a character cell is than it is wide: 2 unless the terminal says otherwise. */
+  ratio = 2;
   ch: string[] = [];
   fg = new Int32Array(0);
   bg = new Int32Array(0);
@@ -160,28 +165,41 @@ export class Screen {
 
 /**
  * Takes over the terminal: the alternate screen, raw keys, redraws on resize,
- * and the terminal put back however the program ends.
+ * and the terminal put back however the program ends. `onCell` is told the
+ * shape of a character cell, its height over its width, when the terminal
+ * says, at the start and again whenever its size changes.
  */
-export function session(onKey: (key: Key) => void, onResize: () => void) {
+export function session(onKey: (key: Key) => void, onResize: () => void, onCell: (ratio: number) => void = () => {}) {
   const stdin = process.stdin, out = process.stdout;
   const restore = () => {
     out.write(LEAVE);
     if (stdin.isTTY) stdin.setRawMode(false);
   };
-  const data = (d: Buffer | string) => keys(d.toString()).forEach(onKey);
-  out.write(ENTER);
+  const data = (d: Buffer | string) => {
+    // the terminal's answer about its cells is taken out of what was typed
+    const typed = d.toString().replace(CELL, (_, h: string, w: string) => {
+      if (+h > 0 && +w > 0) onCell(+h / +w);
+      return "";
+    });
+    keys(typed).forEach(onKey);
+  };
+  const resized = () => {
+    onResize();
+    out.write(ASK_CELL);
+  };
+  out.write(ENTER + ASK_CELL);
   stdin.setRawMode(true);
   stdin.setEncoding("utf8");
   stdin.on("data", data);
   stdin.resume();
-  out.on("resize", onResize);
+  out.on("resize", resized);
   process.on("exit", restore);
   const signal = () => process.exit(130);
   process.on("SIGINT", signal);
   process.on("SIGTERM", signal);
   return () => {
     stdin.off("data", data);
-    out.off("resize", onResize);
+    out.off("resize", resized);
     process.off("exit", restore);
     process.off("SIGINT", signal);
     process.off("SIGTERM", signal);
